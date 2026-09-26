@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, Radio, ArrowRight, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
+import { Bell, Radio, ArrowRight, ShieldCheck, Clock, CheckCircle2, Lock, LogOut, Share2 } from 'lucide-react';
 import { Unit, GuestRequest, AuditLog, SystemConfig, UnitTypology } from './types';
 import { 
   loadUnits, 
@@ -23,6 +23,15 @@ import {
 import { callNextHostInQueue, rotateUnitToEnd, reindexQueue } from './utils/roundRobin';
 import { createAuditEntry } from './utils/audit';
 import { playChime } from './utils/audio';
+import { 
+  UserRole, 
+  AuthSession, 
+  getStoredSession, 
+  clearSession, 
+  getRoleFromUrl, 
+  getUnitParamFromUrl,
+  buildPortalUrl 
+} from './utils/auth';
 
 import { Header } from './components/Header';
 import { GuestTotem } from './components/GuestTotem';
@@ -31,6 +40,8 @@ import { ReceptionDesk } from './components/ReceptionDesk';
 import { AdminPanel } from './components/AdminPanel';
 import { PrintableQrModal } from './components/PrintableQrModal';
 import { SimulateGuestModal } from './components/SimulateGuestModal';
+import { PortalLogin } from './components/PortalLogin';
+import { ShareLinksModal } from './components/ShareLinksModal';
 
 export default function App() {
   // Global State
@@ -39,15 +50,121 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => loadAuditLogs());
   const [config, setConfig] = useState<SystemConfig>(() => loadConfig());
 
-  // UI State
-  const [activeTab, setActiveTab] = useState<'guest' | 'host' | 'reception' | 'admin'>('guest');
-  const [currentHostUnitId, setCurrentHostUnitId] = useState<string>(() => getSelectedHostUnitId());
+  // UI & Session State
+  const [hostSession, setHostSession] = useState<AuthSession | null>(() => getStoredSession('host'));
+  const [receptionSession, setReceptionSession] = useState<AuthSession | null>(() => getStoredSession('reception'));
+  const [adminSession, setAdminSession] = useState<AuthSession | null>(() => getStoredSession('admin'));
+
+  const [activeTab, setActiveTab] = useState<'guest' | 'host' | 'reception' | 'admin'>(() => {
+    const urlRole = getRoleFromUrl();
+    if (urlRole === 'host' && getStoredSession('host')) return 'host';
+    if (urlRole === 'reception' && getStoredSession('reception')) return 'reception';
+    if (urlRole === 'admin' && getStoredSession('admin')) return 'admin';
+    return 'guest';
+  });
+
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => {
+    const urlRole = getRoleFromUrl();
+    if (urlRole === 'host' && !getStoredSession('host')) return true;
+    if (urlRole === 'reception' && !getStoredSession('reception')) return true;
+    if (urlRole === 'admin' && !getStoredSession('admin')) return true;
+    return false;
+  });
+
+  const [loginTargetRole, setLoginTargetRole] = useState<'host' | 'reception' | 'admin'>(() => {
+    const urlRole = getRoleFromUrl();
+    if (urlRole === 'host' || urlRole === 'reception' || urlRole === 'admin') return urlRole;
+    return 'host';
+  });
+
+  const [loginInitialUnit, setLoginInitialUnit] = useState<string | null>(() => getUnitParamFromUrl());
+  const [isShareLinksOpen, setIsShareLinksOpen] = useState<boolean>(false);
+
+  const [currentHostUnitId, setCurrentHostUnitId] = useState<string>(() => {
+    const session = getStoredSession('host');
+    if (session?.unitId) return session.unitId;
+    return getSelectedHostUnitId();
+  });
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [isQrPlaqueOpen, setIsQrPlaqueOpen] = useState<boolean>(false);
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState<boolean>(false);
 
   // Active in-progress request for the Totem and Host alert
   const activeRequest = requests.find(r => r.status === 'waiting_host' || r.status === 'accepted') || null;
+
+  const updateUrlForRole = useCallback((role: 'guest' | 'host' | 'reception' | 'admin', unitNumber?: string) => {
+    if (typeof window === 'undefined') return;
+    const url = buildPortalUrl(role, unitNumber);
+    window.history.replaceState({}, '', url);
+  }, []);
+
+  const handleOpenLogin = useCallback((role: 'host' | 'reception' | 'admin' = 'host', initialUnit?: string | null) => {
+    setLoginTargetRole(role);
+    if (initialUnit !== undefined) setLoginInitialUnit(initialUnit);
+    setIsLoginModalOpen(true);
+  }, []);
+
+  const handleLoginSuccess = useCallback((session: AuthSession) => {
+    if (session.role === 'host') {
+      setHostSession(session);
+      if (session.unitId) {
+        setCurrentHostUnitId(session.unitId);
+      }
+    } else if (session.role === 'reception') {
+      setReceptionSession(session);
+    } else if (session.role === 'admin') {
+      setAdminSession(session);
+    }
+    setActiveTab(session.role);
+    setIsLoginModalOpen(false);
+    updateUrlForRole(session.role, session.unitNumber);
+  }, [updateUrlForRole]);
+
+  const handleLogout = useCallback(() => {
+    if (activeTab === 'host') {
+      clearSession('host');
+      setHostSession(null);
+    } else if (activeTab === 'reception') {
+      clearSession('reception');
+      setReceptionSession(null);
+    } else if (activeTab === 'admin') {
+      clearSession('admin');
+      setAdminSession(null);
+    }
+    setActiveTab('guest');
+    updateUrlForRole('guest');
+  }, [activeTab, updateUrlForRole]);
+
+  const handleTabChange = useCallback((tab: 'guest' | 'host' | 'reception' | 'admin') => {
+    if (tab === 'guest') {
+      setActiveTab('guest');
+      updateUrlForRole('guest');
+      return;
+    }
+    if (tab === 'host') {
+      if (hostSession) {
+        setActiveTab('host');
+        updateUrlForRole('host', hostSession.unitNumber);
+      } else {
+        handleOpenLogin('host');
+      }
+    } else if (tab === 'reception') {
+      if (receptionSession) {
+        setActiveTab('reception');
+        updateUrlForRole('reception');
+      } else {
+        handleOpenLogin('reception');
+      }
+    } else if (tab === 'admin') {
+      if (adminSession) {
+        setActiveTab('admin');
+        updateUrlForRole('admin');
+      } else {
+        handleOpenLogin('admin');
+      }
+    }
+  }, [hostSession, receptionSession, adminSession, handleOpenLogin, updateUrlForRole]);
 
   // Sync current host unit id to storage
   useEffect(() => {
