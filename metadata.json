@@ -1,0 +1,6 @@
+{
+  "name": "Rotativo 302 - Gestão de Balcão e Rodízio Imparcial",
+  "description": "Sistema automatizado de fila rotativa (Round Robin) para distribuição de hóspedes de balcão no Complexo 302, eliminando decisões manuais da portaria e garantindo transparência.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
