@@ -421,7 +421,7 @@ export const HostPortal: React.FC<HostPortalProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Portal do Proprietário</span>
               <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-amber-300 border border-slate-700">
-                🏢 Torre Única • {currentUnit?.floor}º Andar
+                🏢 Crystal Place • {currentUnit?.floor}º Andar
               </span>
               <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
                 1 Quarto Padrão
@@ -712,21 +712,44 @@ export const HostPortal: React.FC<HostPortalProps> = ({
             </span>
           </div>
 
-          {/* Decision Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => onHostAccept(activeRequest.id, currentUnit.id)}
-              className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl shadow-xl shadow-emerald-500/20 text-base flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
-            >
-              <CheckCircle2 className="w-5 h-5" />
-              <span>ACEITAR HOSPEDAGEM (CONCRETIZAR)</span>
-            </button>
-            <button
-              onClick={() => setRejectReasonModalOpen(true)}
-              className="py-4 px-6 bg-slate-950 hover:bg-slate-900 text-rose-400 border border-rose-500/30 hover:border-rose-500 font-bold rounded-2xl text-sm transition-all"
-            >
-              Recusar / Não Posso Atender
-            </button>
+          {/* Decision Buttons with Optional Justification Field */}
+          <div className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                <span>Justificativa da Resposta / Observação para a Portaria (Opcional):</span>
+                <span className="text-[11px] text-slate-500 font-normal">Não obrigatório</span>
+              </label>
+              <input
+                type="text"
+                value={customRejectReason}
+                onChange={(e) => setCustomRejectReason(e.target.value)}
+                placeholder="Ex: Apartamento preparado e higienizado com chave pronta / ou motivo se for recusar..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => onHostAccept(activeRequest.id, currentUnit.id)}
+                className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl shadow-xl shadow-emerald-500/20 text-base flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                <span>ACEITAR HOSPEDAGEM (CONCRETIZAR)</span>
+              </button>
+              <button
+                onClick={() => {
+                  if (customRejectReason.trim()) {
+                    onHostReject(activeRequest.id, currentUnit.id, customRejectReason.trim());
+                  } else {
+                    setRejectReasonModalOpen(true);
+                  }
+                }}
+                className="py-4 px-6 bg-slate-950 hover:bg-slate-900 text-rose-400 border border-rose-500/30 hover:border-rose-500 font-bold rounded-2xl text-sm transition-all flex items-center justify-center gap-2"
+              >
+                <XCircle className="w-4 h-4 text-rose-400" />
+                <span>RECUSAR HOSPEDAGEM</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -821,9 +844,9 @@ export const HostPortal: React.FC<HostPortalProps> = ({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-400" />
-                Ordem Atual da Fila Rotativa ({activeQueueUnits.length} Unidades Prontas - Torre Única)
+                Ordem Atual da Fila Rotativa ({activeQueueUnits.length} Unidades Prontas)
               </h3>
-              <span className="text-xs text-slate-400">Algoritmo Round Robin Auditado</span>
+              <span className="text-xs text-slate-400">Distribuição Auditada</span>
             </div>
 
             <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
@@ -1599,17 +1622,34 @@ export const HostPortal: React.FC<HostPortalProps> = ({
               Informe o motivo da recusa. A vez será repassada imediatamente para o próximo anfitrião da fila de espera.
             </p>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                  <span>Motivo da recusa / Justificativa:</span>
+                  <span className="text-[10px] text-slate-500 font-normal">Não obrigatório</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Justificativa rápida (opcional)..."
+                  value={customRejectReason}
+                  onChange={(e) => setCustomRejectReason(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="text-[11px] text-slate-400 font-semibold pt-1">
+                Ou selecione uma opção rápida:
+              </div>
+
               {[
-                'Perfil do hóspede incompatível com as regras',
                 'Ocupado de última hora / Uso próprio',
                 'Unidade em manutenção emergencial',
+                'Perfil do hóspede incompatível com as regras',
                 'Divergência de valores ou noites',
-                'Outro',
               ].map(reason => (
                 <label
                   key={reason}
-                  className={`flex items-center gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-colors ${
+                  className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs cursor-pointer transition-colors ${
                     selectedRejectReason === reason
                       ? 'bg-amber-500/10 border-amber-500 text-amber-300'
                       : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
@@ -1626,16 +1666,6 @@ export const HostPortal: React.FC<HostPortalProps> = ({
                   <span>{reason}</span>
                 </label>
               ))}
-
-              {selectedRejectReason === 'Outro' && (
-                <input
-                  type="text"
-                  placeholder="Especifique o motivo..."
-                  value={customRejectReason}
-                  onChange={(e) => setCustomRejectReason(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
-                />
-              )}
             </div>
 
             <div className="flex gap-3 pt-3">

@@ -33,17 +33,18 @@ export interface AuthSession {
 
 const STORAGE_KEYS = {
   SESSION: 'proximo_auth_session',
-  ACCOUNTS: 'proximo_access_accounts_clean_v1',
+  ACCOUNTS: 'proximo_access_accounts_pristine_v2',
 };
 
-// Seed only master admin account ready for test validation
+// Seed master admin account who is also Host of Unit 302
 export const INITIAL_ACCOUNTS: AccessAccount[] = [
   {
     id: 'acc-admin',
-    name: 'Wellington Rodovalho (Síndico/Admin)',
+    name: 'Wellington Rodovalho (Síndico/Admin & Anfitrião)',
     email: 'Wellington.Rodovalho@gmail.com',
     phone: '(62) 99999-0001',
     role: 'admin',
+    unitNumber: '302',
     status: 'approved',
     requestedAt: new Date().toISOString(),
     approvedAt: new Date().toISOString(),

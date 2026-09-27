@@ -2,17 +2,28 @@ import { Unit, UnitTypology, UnitBlock, GuestRequest, AuditLog, SystemConfig } f
 import { createAuditEntry } from './audit';
 
 const STORAGE_KEYS = {
-  UNITS: 'rotativo302_units_clean_v1',
-  REQUESTS: 'rotativo302_requests_clean_v1',
-  AUDIT: 'rotativo302_audit_clean_v1',
-  CONFIG: 'rotativo302_config_clean_v1',
+  UNITS: 'rotativo302_units_pristine_v2',
+  REQUESTS: 'rotativo302_requests_pristine_v2',
+  AUDIT: 'rotativo302_audit_pristine_v2',
+  CONFIG: 'rotativo302_config_pristine_v2',
   CURRENT_USER_HOST_UNIT: 'rotativo302_current_host_unit',
 };
 
 // Purge legacy mock data from browser localStorage to ensure clean test state
 if (typeof window !== 'undefined') {
   try {
-    ['rotativo302_units', 'rotativo302_requests', 'rotativo302_audit', 'rotativo302_config', 'proximo_access_accounts_v1'].forEach(k => {
+    [
+      'rotativo302_units',
+      'rotativo302_requests',
+      'rotativo302_audit',
+      'rotativo302_config',
+      'proximo_access_accounts_v1',
+      'rotativo302_units_clean_v1',
+      'rotativo302_requests_clean_v1',
+      'rotativo302_audit_clean_v1',
+      'rotativo302_config_clean_v1',
+      'proximo_access_accounts_clean_v1'
+    ].forEach(k => {
       localStorage.removeItem(k);
     });
   } catch (e) {
@@ -116,14 +127,12 @@ export function generate302Units(): Unit[] {
         basePrice += 60;
       }
 
-      // Administrative status (95% enabled by admin, 5% blocked due to maintenance or condo fees)
-      const isEligibleByAdmin = count % 19 !== 0;
-      const ineligibleReason = !isEligibleByAdmin 
-        ? (count % 2 === 0 ? 'Inadimplência de taxa condominial (Art. 14 Convenção)' : 'Vistoria técnica predial pendente')
-        : undefined;
+      // Administrative status: all units start eligible by default in clean test state
+      const isEligibleByAdmin = true;
+      const ineligibleReason = undefined;
 
-      // Host availability: realistic distribution
-      const isAvailableByHost = isEligibleByAdmin && (count <= 35 ? count % 2 === 1 : count % 5 === 0);
+      // Host availability: starts FALSE (0 hosts in queue) until an accredited host enables availability
+      const isAvailableByHost = false;
 
       const photoUrl = UNIT_PHOTOS[count % UNIT_PHOTOS.length];
 
@@ -147,7 +156,7 @@ export function generate302Units(): Unit[] {
         isEligibleByAdmin,
         ineligibleReason,
         isAvailableByHost,
-        queuePosition: isAvailableByHost ? queueSeed++ : 9999,
+        queuePosition: 9999,
         totalBookingsCompleted: 0,
         totalCallsReceived: 0,
         totalRejections: 0,
@@ -158,12 +167,6 @@ export function generate302Units(): Unit[] {
       });
     }
   }
-
-  // Sort initial queue positions
-  const availableUnits = units.filter(u => u.isEligibleByAdmin && u.isAvailableByHost);
-  availableUnits.forEach((unit, index) => {
-    unit.queuePosition = index + 1;
-  });
 
   return units;
 }

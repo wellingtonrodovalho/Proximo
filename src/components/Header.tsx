@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
               <p className="text-xs text-slate-400 truncate">
-                Crystal Place Residence • Torre Única ({totalUnitsCount} Unidades)
+                Crystal Place Residence
               </p>
             </div>
           </div>
@@ -167,10 +167,36 @@ export const Header: React.FC<HeaderProps> = ({
                     <ShieldCheck className="w-4 h-4 text-emerald-400" />
                     <div>
                       <strong className="text-white">Administração & Síndico</strong>
+                      {currentHostUnitNumber && (
+                        <span className="text-[10px] text-amber-300 ml-1.5 hidden sm:inline">(Apto {currentHostUnitNumber})</span>
+                      )}
                     </div>
                   </>
                 )}
               </div>
+
+              {/* Quick Switch for Administrator to toggle between Admin and Host Portal */}
+              {activeTab === 'admin' && (
+                <button
+                  onClick={() => setActiveTab('host')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  title="Acessar o Portal do Anfitrião como Administrador/Proprietário"
+                >
+                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Modo Anfitrião</span>
+                </button>
+              )}
+
+              {activeTab === 'host' && (
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  title="Retornar ao Painel do Administrador"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="hidden sm:inline">Painel do Síndico</span>
+                </button>
+              )}
 
               {/* Share Access Links Button */}
               <button

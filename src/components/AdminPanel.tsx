@@ -284,10 +284,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 />
               </div>
 
-              {/* Single Tower Badge */}
+              {/* Complex Badge */}
               <div className="bg-slate-950 border border-slate-800 text-amber-300 font-semibold text-xs rounded-xl px-3 py-2 flex items-center gap-1.5 flex-shrink-0">
                 <Building2 className="w-3.5 h-3.5 text-amber-400" />
-                <span>Torre Única (302 Unidades)</span>
+                <span>Crystal Place</span>
               </div>
 
               {/* Status Filter */}
@@ -432,7 +432,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-400" />
-                Fila Virtual do Round Robin em Tempo Real
+                Fila Virtual Rotativa em Tempo Real
               </h3>
               <p className="text-xs text-slate-400">
                 Ordem exata e imutável em que os anfitriões serão chamados para os próximos hóspedes de balcão.

@@ -71,11 +71,11 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('SISTEMA PROXIMO • ROTATIVO AUTÔNOMO DE BALCÃO (ROUND ROBIN)', margin + 6, cursorY + 20);
+  doc.text('SISTEMA PROXIMO • ROTATIVO DE BALCÃO AUDITÁVEL', margin + 6, cursorY + 20);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text(`Condomínio ${condoName} • Torre Única • Diretrizes para Anfitriões, Portaria e Administração`, margin + 6, cursorY + 26);
+  doc.text(`Condomínio ${condoName} • Diretrizes para Anfitriões, Portaria e Administração`, margin + 6, cursorY + 26);
 
   cursorY += 40;
 
@@ -145,24 +145,23 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
       title: 'A. Como Solicitar o Acesso (Cadastro Simplificado):',
       content: 
         '1. Acesse o botão "Acesso Restrito" na barra superior do aplicativo.\n' +
-        '2. Preencha os campos obrigatórios: Nome Completo, E-mail, Telefone (WhatsApp) e selecione o Tipo "Anfitrião".\n' +
-        '3. Digite o número da sua Unidade na Torre Única (ex: 101 a 2004).\n' +
+        '2. Preencha os campos obrigatórios: Nome Completo, E-mail, Telefone (WhatsApp) e selecione o Tipo "Anfitrião" (ou Administrador, que também pode ser Anfitrião).\n' +
+        '3. Digite o número da sua Unidade no condomínio (ex: 101 a 2004).\n' +
         '4. Clique em "Solicitar Acesso". Seu cadastro ficará no status "Pendente" aguardando a validação do Administrador/Síndico.'
     },
     {
-      title: 'B. Ativação e Gestão de Disponibilidade na Fila Virtual:',
+      title: 'B. Notificações Multicanal Imediatas (E-mail, WhatsApp e SMS):',
       content:
-        '• Botão "Disponível para Hóspedes": Quando ativo (Verde), sua unidade participa do rodízio. Desative sempre que a unidade estiver ocupada por locação particular ou manutenção.\n' +
-        '• Posição na Fila: Você acompanha em tempo real qual a posição da sua unidade (ex: 1º da fila, 4º da fila).\n' +
-        '• Regra de Ouro do Round Robin: Assim que sua unidade recebe um hóspede e a reserva é concluída, ela vai automaticamente para o final da fila de unidades disponíveis.'
+        '• Assim que seu credenciamento for validado e aprovado pelo Administrador, você receberá confirmações automáticas por E-mail, WhatsApp e SMS.\n' +
+        '• Todas as convocações de chamados de hóspedes de balcão são enviadas simultaneamente através de múltiplos canais para garantir resposta ágil.'
     },
     {
-      title: 'C. Recebimento de Chamado e SLA de Resposta (180 segundos):',
+      title: 'C. Recebimento de Chamado e Botões de Resposta:',
       content:
-        '• Quando um hóspede de balcão solicita vaga e sua unidade for a 1ª da fila, um chamado sonoro e visual é disparado imediatamente.\n' +
-        '• Você tem até 3 minutos (180s) para clicar em "ACEITAR HOSPEDAGEM" ou "RECUSAR".\n' +
+        '• Quando um hóspede de balcão for alocado para sua unidade, são exibidos os botões de resposta: "ACEITAR HOSPEDAGEM (CONCRETIZAR)" e "RECUSAR HOSPEDAGEM".\n' +
+        '• Campo de Justificativa / Observação: Campo de texto livre para observações à portaria ou motivo da resposta (opcional, não obrigatório).\n' +
         '• Ao Aceitar: A portaria recebe o voucher instantâneo e fica autorizada a liberar a chave ao hóspede.\n' +
-        '• Se Recusar ou o tempo expirar (Timeout): O sistema repassa o hóspede autonomamente para o próximo anfitrião da fila para não travar o balcão.'
+        '• Ao Recusar ou Expirar: O sistema repassa a vez imediatamente para o próximo anfitrião da fila.'
     },
     {
       title: 'D. Transparência de Valores e Regras do Imóvel:',
@@ -264,10 +263,10 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
       title: 'A. Validação e Aprovação Obrigatória de Novos Cadastros:',
       content:
         '• Todo novo usuário (Anfitrião, Portaria ou Administrador) entra com status PENDENTE.\n' +
+        '• O Administrador pode ser também Anfitrião: Se possuir imóvel no condomínio, basta vincular sua unidade para participar do rodízio com acesso integrado.\n' +
         '• No Painel do Administrador, acesse a aba "Validação de Acessos".\n' +
-        '• O Síndico confere o nome, documento, e-mail e unidade do proprietário com a lista oficial de condôminos.\n' +
-        '• Clique em "Validar & Aprovar" para liberar o acesso ou "Rejeitar" caso os dados não confiram.\n' +
-        '• O botão "Avisar no WhatsApp" envia mensagem pronta ao condômino informando a liberação.'
+        '• Ao clicar em "Validar & Aprovar", o credenciamento dispara notificações automáticas multicanal (E-mail, WhatsApp e SMS) ao condômino.\n' +
+        '• O botão "Avisar no WhatsApp" envia mensagem pronta ao condômino confirmando a liberação.'
     },
     {
       title: 'B. Controle de Elegibilidade e Bloqueio Administrativo das 302 Unidades:',

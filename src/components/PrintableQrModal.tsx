@@ -80,7 +80,7 @@ export const PrintableQrModal: React.FC<PrintableQrModalProps> = ({
               SISTEMA DE EQUIDADE CONDOPROTECT
             </div>
             <p>
-              • Atendimento 100% autônomo via <strong>Fila Rotativa Imparcial (Round Robin)</strong>.
+              • Atendimento 100% autônomo via <strong>Fila Rotativa Imparcial e Auditada</strong>.
             </p>
             <p>
               • A portaria não possui interface para escolha manual de apartamentos.

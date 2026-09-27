@@ -66,7 +66,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                {condoName} • Sistema PROXIMO (Round Robin Autônomo)
+                {condoName} • Sistema PROXIMO
               </p>
             </div>
           </div>
@@ -198,37 +198,37 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                     Como Solicitar Acesso
                   </h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Clique em <strong>"Acesso Restrito"</strong> na barra superior. Digite seu <strong>Nome</strong>, <strong>E-mail</strong>, <strong>WhatsApp</strong> e selecione o Tipo <strong>"Anfitrião"</strong> informando o número do seu apartamento. Seu cadastro entra como pendente e é validado pelo Síndico.
+                    Clique em <strong>"Acesso Restrito"</strong> na barra superior. Digite seu <strong>Nome</strong>, <strong>E-mail</strong>, <strong>WhatsApp</strong> e selecione <strong>"Anfitrião"</strong> (ou Administrador, que também pode ser Anfitrião). Seu cadastro é validado pelo Síndico.
                   </p>
                 </div>
 
                 <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">2</span>
-                    Disponibilidade na Fila Virtual
+                    Notificações Multicanal
                   </h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Ative o botão <strong>"Disponível para Hóspedes"</strong> (Verde) quando seu apartamento estiver limpo e pronto. Acompanhe sua posição exata na fila em tempo real (ex: 1º da fila, 5º da fila).
+                    Após o credenciamento ser aprovado pelo Administrador, você receberá notificações automáticas por <strong>E-mail</strong>, <strong>WhatsApp</strong> e <strong>SMS</strong>.
                   </p>
                 </div>
 
                 <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">3</span>
-                    Alerta de Chamado & SLA (180s)
+                    Botões de Resposta & Justificativa
                   </h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Quando um hóspede chegar e sua unidade for a 1ª da fila, você receberá alerta com contagem regressiva de <strong>3 minutos (180s)</strong>. Clique em <strong>ACEITAR</strong> para garantir a hospedagem.
+                    Ao receber um chamado, responda clicando em <strong>"ACEITAR"</strong> ou <strong>"RECUSAR"</strong>. Há um campo para inserir justificativa ou observação para a portaria (opcional, não obrigatório).
                   </p>
                 </div>
 
                 <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white flex items-center gap-1.5">
                     <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px]">4</span>
-                    Regra do Round Robin
+                    Fila Rotativa Imparcial
                   </h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Após aceitar e concluir o check-in, sua unidade é transferida <strong>automaticamente para o fim da fila</strong>, garantindo oportunidade igualitária para todos os 302 apartamentos.
+                    Após aceitar e concluir a reserva, sua unidade vai para o fim da fila de unidades disponíveis, garantindo distribuição igualitária e auditada para todos.
                   </p>
                 </div>
               </div>
@@ -299,10 +299,10 @@ export const ManualModal: React.FC<ManualModalProps> = ({
                 <div className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white flex items-center gap-1.5">
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    Validação Obrigatória de Cadastros
+                    Validação de Cadastros & Multi-Canal
                   </h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Acesse a aba <strong>"Validação de Acessos"</strong> no painel. Confirme os dados do anfitrião ou portaria e clique em <strong>"Validar & Aprovar"</strong>. Há também atalho direto para notificar via WhatsApp.
+                    Acesse a aba <strong>"Validação de Acessos"</strong> no painel. O Administrador também pode ser Anfitrião. Ao aprovar um cadastro, o sistema dispara notificações automáticas via <strong>E-mail</strong>, <strong>WhatsApp</strong> e <strong>SMS</strong>.
                   </p>
                 </div>
 

@@ -140,9 +140,9 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
       return;
     }
 
-    // Find unit if host
+    // Find unit if host or admin with unit
     let unitId: string | undefined;
-    if (account.role === 'host' && account.unitNumber) {
+    if (account.unitNumber) {
       const match = units.find(u => u.unitNumber === account.unitNumber);
       unitId = match?.id;
     }
@@ -164,7 +164,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
 
   const handleQuickLogin = (account: AccessAccount) => {
     let unitId: string | undefined;
-    if (account.role === 'host' && account.unitNumber) {
+    if (account.unitNumber) {
       const match = units.find(u => u.unitNumber === account.unitNumber);
       unitId = match?.id;
     }
@@ -357,22 +357,29 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
               </div>
             </div>
 
-            {/* If Host: Apartment Number */}
-            {role === 'host' && (
+            {/* If Host OR Admin: Optional Apartment Number */}
+            {(role === 'host' || role === 'admin') && (
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Número do Apartamento na Torre Única
+                <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                  <span>Número do Apartamento na Torre Única</span>
+                  {role === 'admin' && (
+                    <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                      O Admin também pode ser Anfitrião
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
-                  required
+                  required={role === 'host'}
                   value={unitNumber}
                   onChange={(e) => setUnitNumber(e.target.value)}
-                  placeholder="Ex: 101, 204, 302..."
+                  placeholder={role === 'admin' ? "Ex: 302 (opcional se for também anfitrião)" : "Ex: 101, 204, 302..."}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 font-mono focus:outline-none focus:border-amber-500"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Informe a unidade que você administra no condomínio.
+                  {role === 'admin' 
+                    ? 'Como Administrador, se você possui apartamento no condomínio, informe-o para participar também como anfitrião.' 
+                    : 'Informe a unidade que você administra no condomínio.'}
                 </span>
               </div>
             )}

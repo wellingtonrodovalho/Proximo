@@ -121,8 +121,8 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 max-w-3xl mt-1 leading-relaxed">
                 Este terminal foi projetado para retirar <strong>qualquer decisão discricionária</strong> dos porteiros e recepcionistas. 
-                A portaria não escolhe nem altera apartamentos. As locações de balcão são distribuídas estritamente pelo algoritmo 
-                autônomo Round Robin auditável em tempo real.
+                A portaria não escolhe nem altera apartamentos. As locações de balcão são distribuídas estritamente por sistema 
+                autônomo e auditável em tempo real.
               </p>
             </div>
           </div>

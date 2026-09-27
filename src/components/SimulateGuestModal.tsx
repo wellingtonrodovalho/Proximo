@@ -94,7 +94,7 @@ export const SimulateGuestModal: React.FC<SimulateGuestModalProps> = ({
         <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
           <span>
-            O algoritmo Round Robin selecionará instantaneamente a unidade no topo da fila!
+            O sistema autônomo selecionará instantaneamente a unidade no topo da fila de espera!
           </span>
         </div>
 

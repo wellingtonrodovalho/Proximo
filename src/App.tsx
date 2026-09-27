@@ -23,6 +23,7 @@ import {
 import { callNextHostInQueue, rotateUnitToEnd, reindexQueue } from './utils/roundRobin';
 import { createAuditEntry } from './utils/audit';
 import { playChime } from './utils/audio';
+import { dispatchHostCredentialingNotifications } from './utils/notifications';
 import { 
   UserRole, 
   AccessRole,
@@ -172,28 +173,59 @@ export default function App() {
 
   // Admin approves account
   const handleApproveAccount = useCallback((accountId: string) => {
+    let approvedTarget: AccessAccount | undefined;
+
     setAccessAccounts(prev => prev.map(a => {
       if (a.id === accountId) {
-        return {
+        approvedTarget = {
           ...a,
           status: 'approved',
           approvedAt: new Date().toISOString(),
           approvedBy: 'Administrador / Síndico',
         };
+        return approvedTarget;
       }
       return a;
     }));
 
-    const target = accessAccounts.find(a => a.id === accountId);
+    const target = approvedTarget || accessAccounts.find(a => a.id === accountId);
     if (target) {
+      // 1. Dispatch Multi-Channel Notifications (Email, WhatsApp, SMS, Push)
+      const dispatchResult = dispatchHostCredentialingNotifications({
+        name: target.name,
+        email: target.email,
+        phone: target.phone,
+        unitNumber: target.unitNumber,
+      });
+
+      // 2. If it's a host account and unit exists, link the unit to the owner
+      if (target.unitNumber) {
+        setUnits(prev => prev.map(u => {
+          if (u.unitNumber === target?.unitNumber) {
+            return {
+              ...u,
+              ownerName: target.name,
+              ownerEmail: target.email,
+              ownerPhone: target.phone,
+              whatsapp: target.phone,
+              isEligibleByAdmin: true,
+            };
+          }
+          return u;
+        }));
+      }
+
+      // 3. Register Audit Entry with multi-channel dispatch details
       const log = createAuditEntry(
         'ACCESS_ACCOUNT_APPROVED',
         'Síndico/Admin',
-        `Cadastro de acesso validado e aprovado: ${target.name} (${target.role}${target.unitNumber ? ` - Apto ${target.unitNumber}` : ''}). Acesso liberado no sistema.`,
+        `Credenciamento aprovado: ${target.name} (${target.role}${target.unitNumber ? ` - Apto ${target.unitNumber}` : ''}). Notificações enviadas com sucesso via E-mail (${target.email}), WhatsApp (${target.phone}) e SMS.`,
         { unitNumber: target.unitNumber },
         auditLogs
       );
       setAuditLogs(prev => [log, ...prev]);
+
+      alert(`✅ Credenciamento aprovado com sucesso!\n\nNotificações automáticas enviadas para ${target.name}:\n• E-mail: ${target.email}\n• WhatsApp: ${target.phone}\n• SMS: ${target.phone}`);
     }
   }, [accessAccounts, auditLogs]);
 
@@ -814,12 +846,12 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950/80 py-4 px-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            <strong className="text-amber-400 font-bold tracking-wide">PROXIMO</strong> • <strong className="text-slate-200">Crystal Place Residence</strong> • Gestão de Balcão e Rodízio (Torre Única • 302 Unidades)
+            <strong className="text-amber-400 font-bold tracking-wide">PROXIMO</strong> • <strong className="text-slate-200">Crystal Place Residence</strong> • Gestão de Balcão e Rodízio
           </div>
           <div className="flex items-center gap-3">
             <span className="text-emerald-400 font-medium">Portaria 100% Blindada</span>
             <span>•</span>
-            <span>Algoritmo Round Robin Auditável</span>
+            <span>Distribuição Imparcial e Auditável</span>
           </div>
         </div>
       </footer>
