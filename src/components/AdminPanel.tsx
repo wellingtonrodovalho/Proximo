@@ -20,10 +20,16 @@ import {
   ToggleRight,
   Shield,
   Layers,
-  MessageSquare
+  MessageSquare,
+  UserCheck,
+  Mail,
+  Phone,
+  KeyRound,
+  Send
 } from 'lucide-react';
 import { Unit, AuditLog, GuestRequest, SystemConfig, UnitBlock } from '../types';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
+import { AccessAccount } from '../utils/auth';
 
 interface AdminPanelProps {
   units: Unit[];
@@ -33,6 +39,9 @@ interface AdminPanelProps {
   onToggleUnitAdminEligibility: (unitId: string, isEligible: boolean, reason?: string) => void;
   onUpdateConfig: (config: SystemConfig) => void;
   onResetSystemData: () => void;
+  accessAccounts?: AccessAccount[];
+  onApproveAccount?: (accountId: string) => void;
+  onRejectAccount?: (accountId: string) => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -43,11 +52,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onToggleUnitAdminEligibility,
   onUpdateConfig,
   onResetSystemData,
+  accessAccounts = [],
+  onApproveAccount,
+  onRejectAccount,
 }) => {
-  const [activeTab, setActiveTab] = useState<'units' | 'queue' | 'audit' | 'metrics' | 'settings'>('units');
+  const [activeTab, setActiveTab] = useState<'units' | 'queue' | 'accounts' | 'audit' | 'metrics' | 'settings'>('units');
   const [searchUnit, setSearchUnit] = useState('');
   const [filterBlock, setFilterBlock] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active_queue' | 'inactive_host' | 'blocked_admin'>('all');
+  const [filterAccountStatus, setFilterAccountStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
   // Deactivation modal state
   const [deactivatingUnit, setDeactivatingUnit] = useState<Unit | null>(null);
@@ -183,6 +196,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         >
           <Clock className="w-4 h-4" />
           <span>Fila Virtual do Rodízio ({activeInQueueUnits.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('accounts')}
+          className={`pb-3 text-xs sm:text-sm font-bold flex items-center gap-2 border-b-2 whitespace-nowrap transition-colors ${
+            activeTab === 'accounts'
+              ? 'border-amber-500 text-amber-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>Validação de Acessos</span>
+          {accessAccounts.filter(a => a.status === 'pending').length > 0 && (
+            <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-slate-950 animate-pulse">
+              {accessAccounts.filter(a => a.status === 'pending').length} pendente(s)
+            </span>
+          )}
         </button>
 
         <button
@@ -608,6 +638,202 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 Restaurar Dados Padrão das 302 Unidades
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: ACCOUNTS VALIDATION */}
+      {activeTab === 'accounts' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                <UserCheck className="w-4 h-4" />
+                <span>Validação e Liberação de Cadastros</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white">
+                Controle de Acessos ao Sistema
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                O Administrador/Síndico valida quem tem autorização para gerenciar unidades, operar a portaria ou administrar o sistema.
+              </p>
+            </div>
+
+            {/* Filter buttons */}
+            <div className="flex flex-wrap gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs">
+              <button
+                onClick={() => setFilterAccountStatus('all')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                  filterAccountStatus === 'all'
+                    ? 'bg-amber-500 text-slate-950 shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Todos ({accessAccounts.length})
+              </button>
+              <button
+                onClick={() => setFilterAccountStatus('pending')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 ${
+                  filterAccountStatus === 'pending'
+                    ? 'bg-amber-500 text-slate-950 shadow'
+                    : 'text-amber-400 hover:text-white'
+                }`}
+              >
+                <span>Pendentes</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-400/20 text-[10px]">
+                  {accessAccounts.filter(a => a.status === 'pending').length}
+                </span>
+              </button>
+              <button
+                onClick={() => setFilterAccountStatus('approved')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                  filterAccountStatus === 'approved'
+                    ? 'bg-amber-500 text-slate-950 shadow'
+                    : 'text-emerald-400 hover:text-white'
+                }`}
+              >
+                Aprovados ({accessAccounts.filter(a => a.status === 'approved').length})
+              </button>
+              <button
+                onClick={() => setFilterAccountStatus('rejected')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+                  filterAccountStatus === 'rejected'
+                    ? 'bg-amber-500 text-slate-950 shadow'
+                    : 'text-rose-400 hover:text-white'
+                }`}
+              >
+                Rejeitados ({accessAccounts.filter(a => a.status === 'rejected').length})
+              </button>
+            </div>
+          </div>
+
+          {/* Accounts List */}
+          <div className="space-y-3">
+            {accessAccounts
+              .filter(a => filterAccountStatus === 'all' || a.status === filterAccountStatus)
+              .map((acc) => {
+                const phoneDigits = acc.phone.replace(/\D/g, '');
+                const waUrl = `https://wa.me/55${phoneDigits}?text=${encodeURIComponent(
+                  `Olá ${acc.name}! Seu cadastro de acesso ao sistema PROXIMO (Crystal Place Residence) como ${
+                    acc.role === 'host' ? `Anfitrião da Unidade ${acc.unitNumber}` : acc.role === 'reception' ? 'Portaria e Balcão 24h' : 'Administração'
+                  } foi ${acc.status === 'approved' ? 'VALIDADO E LIBERADO' : 'analisado'} pelo Administrador.`
+                )}`;
+
+                return (
+                  <div
+                    key={acc.id}
+                    className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                      acc.status === 'pending'
+                        ? 'bg-amber-500/5 border-amber-500/30'
+                        : acc.status === 'approved'
+                          ? 'bg-slate-950 border-slate-800'
+                          : 'bg-rose-500/5 border-rose-500/20 opacity-75'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-base font-bold text-white">
+                          {acc.name}
+                        </span>
+                        
+                        {/* Role badge */}
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          acc.role === 'host'
+                            ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30'
+                            : acc.role === 'reception'
+                              ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30'
+                              : 'bg-purple-500/10 text-purple-300 border border-purple-500/30'
+                        }`}>
+                          {acc.role === 'host' && <KeyRound className="w-3 h-3" />}
+                          {acc.role === 'reception' && <Building2 className="w-3 h-3" />}
+                          {acc.role === 'admin' && <ShieldCheck className="w-3 h-3" />}
+                          <span>
+                            {acc.role === 'host' ? `Anfitrião (Apto ${acc.unitNumber || 'Não inf.'})` : acc.role === 'reception' ? 'Portaria & Balcão' : 'Administrador / Síndico'}
+                          </span>
+                        </span>
+
+                        {/* Status badge */}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                          acc.status === 'pending'
+                            ? 'bg-amber-500 text-slate-950 animate-pulse'
+                            : acc.status === 'approved'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                        }`}>
+                          {acc.status === 'pending' && <Clock className="w-3 h-3" />}
+                          {acc.status === 'approved' && <CheckCircle className="w-3 h-3" />}
+                          {acc.status === 'rejected' && <XCircle className="w-3 h-3" />}
+                          <span>
+                            {acc.status === 'pending' ? 'Pendente de Validação' : acc.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                          </span>
+                        </span>
+                      </div>
+
+                      {/* Contact & Date Details */}
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{acc.email}</span>
+                        </span>
+                        <span className="flex items-center gap-1 font-mono">
+                          <Phone className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{acc.phone}</span>
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          Solicitado em: {new Date(acc.requestedAt).toLocaleString('pt-BR')}
+                        </span>
+                        {acc.approvedBy && (
+                          <span className="text-[11px] text-emerald-400">
+                            Validado por: {acc.approvedBy}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+                      {acc.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => onApproveAccount?.(acc.id)}
+                            className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all hover:scale-105"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Validar & Aprovar</span>
+                          </button>
+                          <button
+                            onClick={() => onRejectAccount?.(acc.id)}
+                            className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold rounded-xl text-xs transition-colors"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            <span>Rejeitar</span>
+                          </button>
+                        </>
+                      )}
+
+                      {acc.status === 'approved' && (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                          title="Enviar confirmação de validação pelo WhatsApp"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Avisar no WhatsApp</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+            {accessAccounts.filter(a => filterAccountStatus === 'all' || a.status === filterAccountStatus).length === 0 && (
+              <div className="text-center py-12 text-slate-500 bg-slate-950 rounded-2xl border border-slate-800/80">
+                <UserCheck className="w-8 h-8 mx-auto mb-2 text-slate-600" />
+                <p className="text-sm font-medium">Nenhum cadastro encontrado neste filtro.</p>
+              </div>
+            )}
           </div>
         </div>
       )}

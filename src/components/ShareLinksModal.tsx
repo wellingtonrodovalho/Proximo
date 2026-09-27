@@ -13,26 +13,28 @@ import {
   Lock,
   Sparkles
 } from 'lucide-react';
-import { buildPortalUrl, DEFAULT_CREDENTIALS } from '../utils/auth';
+import { buildPortalUrl } from '../utils/auth';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
 
 interface ShareLinksModalProps {
   isOpen: boolean;
   onClose: () => void;
   complexName: string;
+  currentHostUnitNumber?: string;
 }
 
 export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
   isOpen,
   onClose,
   complexName,
+  currentHostUnitNumber,
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const guestUrl = buildPortalUrl('guest');
-  const hostUrl = buildPortalUrl('host');
+  const hostUrl = buildPortalUrl('host', currentHostUnitNumber);
   const receptionUrl = buildPortalUrl('reception');
   const adminUrl = buildPortalUrl('admin');
 
@@ -43,15 +45,15 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
   };
 
   const getHostShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nPrezado(a) Anfitrião(a),\n\nSegue seu link exclusivo de acesso ao *Portal do Anfitrião* para participar do rodízio autônomo de hóspedes de balcão:\n\n🔗 ${hostUrl}\n\n🔑 *Como acessar:*\n1. Informe o número do seu apartamento na Torre Única (ex: 101, 304)\n2. Senha padrão inicial: *${DEFAULT_CREDENTIALS.host.defaultPassword}*\n\nPor favor, mantenha sua disponibilidade ativa para receber os chamados em tempo real!`;
+    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nPrezado(a) Anfitrião(a),\n\nSegue seu link de acesso ao *Portal do Anfitrião* para participar do rodízio autônomo de hóspedes de balcão:\n\n🔗 ${hostUrl}\n\n🔑 *Acesso Restrito:*\nCadastre seu Nome, E-mail, Telefone (WhatsApp) e Unidade. O Administrador valida e libera seu acesso rapidamente!\n\nPor favor, mantenha sua disponibilidade ativa para receber os chamados em tempo real.`;
   };
 
   const getReceptionShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nLink de acesso operacional para a *Portaria & Balcão 24h*:\n\n🔗 ${receptionUrl}\n\n🔑 *Acesso:*\nUsuário: *${DEFAULT_CREDENTIALS.reception.username}*\nSenha: *${DEFAULT_CREDENTIALS.reception.password}*`;
+    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nLink de acesso operacional para a *Portaria & Balcão 24h*:\n\n🔗 ${receptionUrl}\n\n🔑 *Acesso:*\nSolicite ou entre com seu cadastro validado pela administração.`;
   };
 
   const getAdminShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nLink restrito de gestão para o *Síndico e Administração*:\n\n🔗 ${adminUrl}\n\n🔑 *Acesso:*\nUsuário: *${DEFAULT_CREDENTIALS.admin.username}*\nSenha: *${DEFAULT_CREDENTIALS.admin.password}*`;
+    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nLink restrito de gestão para o *Síndico e Administração*:\n\n🔗 ${adminUrl}\n\n🔑 *Acesso:*\nPainel de validação e controle administrativo do condomínio.`;
   };
 
   return (
@@ -95,7 +97,7 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
                 </div>
               </div>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                Login: Apto + Senha 123
+                Cadastro Simples • Validação Admin
               </span>
             </div>
 
@@ -145,7 +147,7 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
                 </div>
               </div>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
-                Usuário: portaria • Senha: 242
+                Acesso Equipe • Validação Admin
               </span>
             </div>
 
@@ -185,7 +187,7 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
                 </div>
               </div>
               <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                Usuário: admin • Senha: 302
+                Acesso Master • Validação
               </span>
             </div>
 

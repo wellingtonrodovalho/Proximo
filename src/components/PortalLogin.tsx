@@ -1,487 +1,466 @@
 import React, { useState } from 'react';
 import { 
   Lock, 
+  UserCheck, 
+  ArrowLeft, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle, 
   KeyRound, 
   Building2, 
   ShieldCheck, 
-  ArrowLeft, 
-  CheckCircle2, 
-  AlertCircle, 
-  Eye, 
-  EyeOff, 
+  Send, 
+  Phone, 
+  Mail, 
+  User, 
   Sparkles,
-  ExternalLink,
-  ChevronRight
+  Check
 } from 'lucide-react';
+import { AccessAccount, AccessRole, AuthSession, saveSession } from '../utils/auth';
 import { Unit } from '../types';
-import { DEFAULT_CREDENTIALS, AuthSession, saveSession } from '../utils/auth';
 
 interface PortalLoginProps {
-  initialRole: 'host' | 'reception' | 'admin';
+  isOpen: boolean;
+  onClose: () => void;
+  accounts: AccessAccount[];
   units: Unit[];
-  initialUnitNumber?: string | null;
-  onSuccess: (session: AuthSession) => void;
-  onCancel: () => void;
+  onRequestAccess: (account: Omit<AccessAccount, 'id' | 'status' | 'requestedAt'>) => void;
+  onLoginSuccess: (session: AuthSession) => void;
+  initialRole?: AccessRole;
 }
 
 export const PortalLogin: React.FC<PortalLoginProps> = ({
-  initialRole,
+  isOpen,
+  onClose,
+  accounts,
   units,
-  initialUnitNumber,
-  onSuccess,
-  onCancel,
+  onRequestAccess,
+  onLoginSuccess,
+  initialRole = 'host',
 }) => {
-  const [selectedRole, setSelectedRole] = useState<'host' | 'reception' | 'admin'>(initialRole);
+  const [mode, setMode] = useState<'request' | 'login'>('request');
   
-  // Host state
-  const [unitNumber, setUnitNumber] = useState<string>(initialUnitNumber || '');
-  const [hostPassword, setHostPassword] = useState<string>('');
-  
-  // Staff state (Reception / Admin)
-  const [username, setUsername] = useState<string>(
-    initialRole === 'admin' ? DEFAULT_CREDENTIALS.admin.username : DEFAULT_CREDENTIALS.reception.username
-  );
-  const [password, setPassword] = useState<string>('');
-  
-  const [rememberMe, setRememberMe] = useState<boolean>(true);
+  // Registration Form
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<AccessRole>(initialRole);
+  const [unitNumber, setUnitNumber] = useState('');
+
+  // Login Form
+  const [searchCredential, setSearchCredential] = useState('');
+
+  // Feedback
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Handle Role change
-  const handleRoleChange = (role: 'host' | 'reception' | 'admin') => {
-    setSelectedRole(role);
-    setErrorMsg(null);
-    if (role === 'admin') {
-      setUsername(DEFAULT_CREDENTIALS.admin.username);
-    } else if (role === 'reception') {
-      setUsername(DEFAULT_CREDENTIALS.reception.username);
-    }
-  };
+  if (!isOpen) return null;
 
-  // Submit Host Login
-  const handleHostSubmit = (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuccessMsg(null);
 
-    const cleanNum = unitNumber.trim();
-    if (!cleanNum) {
-      setErrorMsg('Informe o número do apartamento (ex: 101, 304).');
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+
+    if (!cleanName || !cleanEmail || !cleanPhone) {
+      setErrorMsg('Por favor, preencha todos os campos obrigatórios (Nome, E-mail e Telefone).');
       return;
     }
 
-    // Find unit
-    const matchedUnit = units.find(u => u.unitNumber === cleanNum);
-    if (!matchedUnit) {
-      setErrorMsg(`Apartamento ${cleanNum} não foi encontrado na Torre Única do Crystal Place Residence.`);
+    if (role === 'host' && !unitNumber.trim()) {
+      setErrorMsg('Para acesso de Anfitrião, informe o número do apartamento (ex: 101, 304).');
       return;
     }
 
-    // Check password: allow default '123' or 'anfitriao123' or matchedUnit.id or cleanNum
-    const valid = hostPassword === DEFAULT_CREDENTIALS.host.defaultPassword || 
-                  hostPassword.toLowerCase() === 'anfitriao123' ||
-                  hostPassword === cleanNum;
+    // Check if email already registered
+    const existing = accounts.find(
+      a => a.email.toLowerCase() === cleanEmail || a.phone.replace(/\D/g, '') === cleanPhone.replace(/\D/g, '')
+    );
 
-    if (!valid && hostPassword !== '') {
-      setErrorMsg('Senha incorreta. A senha padrão do anfitrião é 123.');
+    if (existing) {
+      if (existing.status === 'pending') {
+        setErrorMsg('Este e-mail/telefone já possui um cadastro pendente de validação pelo Administrador.');
+        return;
+      }
+      if (existing.status === 'approved') {
+        setErrorMsg('Este cadastro já foi aprovado! Clique na aba "Já Tenho Cadastro" para entrar.');
+        return;
+      }
+    }
+
+    onRequestAccess({
+      name: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      role,
+      unitNumber: role === 'host' ? unitNumber.trim() : undefined,
+    });
+
+    setSuccessMsg('Solicitação enviada com sucesso! O cadastro está pendente de validação pelo Administrador/Síndico.');
+    setName('');
+    setEmail('');
+    setPhone('');
+    setUnitNumber('');
+  };
+
+  const handleDirectLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const term = searchCredential.trim().toLowerCase();
+    const cleanDigits = term.replace(/\D/g, '');
+
+    if (!term) {
+      setErrorMsg('Informe seu e-mail ou telefone cadastrado.');
       return;
+    }
+
+    const account = accounts.find(a => 
+      a.email.toLowerCase() === term || 
+      (cleanDigits && a.phone.replace(/\D/g, '') === cleanDigits) ||
+      a.name.toLowerCase().includes(term)
+    );
+
+    if (!account) {
+      setErrorMsg('Nenhum cadastro encontrado com esses dados. Por favor, solicite seu acesso na aba "Solicitar Acesso".');
+      return;
+    }
+
+    if (account.status === 'pending') {
+      setErrorMsg(`O cadastro de ${account.name} ainda está PENDENTE de validação pelo Administrador.`);
+      return;
+    }
+
+    if (account.status === 'rejected') {
+      setErrorMsg(`O cadastro de ${account.name} foi recusado pela administração do condomínio.`);
+      return;
+    }
+
+    // Find unit if host
+    let unitId: string | undefined;
+    if (account.role === 'host' && account.unitNumber) {
+      const match = units.find(u => u.unitNumber === account.unitNumber);
+      unitId = match?.id;
     }
 
     const session: AuthSession = {
-      role: 'host',
-      unitId: matchedUnit.id,
-      unitNumber: matchedUnit.unitNumber,
-      userName: matchedUnit.ownerName || `Proprietário Apto ${cleanNum}`,
+      role: account.role,
+      accountId: account.id,
+      unitId,
+      unitNumber: account.unitNumber,
+      userName: account.name,
+      userEmail: account.email,
+      userPhone: account.phone,
       authenticatedAt: new Date().toISOString(),
     };
 
-    saveSession(session, rememberMe);
-    onSuccess(session);
+    saveSession(session);
+    onLoginSuccess(session);
   };
 
-  // Submit Reception Login
-  const handleReceptionSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-
-    const validUser = username.trim().toLowerCase() === DEFAULT_CREDENTIALS.reception.username;
-    const validPass = password === DEFAULT_CREDENTIALS.reception.password || 
-                      password === 'portaria123' || 
-                      password === '123';
-
-    if (!validUser || !validPass) {
-      setErrorMsg(`Credenciais inválidas para Portaria. Utilize usuário "${DEFAULT_CREDENTIALS.reception.username}" e senha "${DEFAULT_CREDENTIALS.reception.password}".`);
-      return;
+  const handleQuickLogin = (account: AccessAccount) => {
+    let unitId: string | undefined;
+    if (account.role === 'host' && account.unitNumber) {
+      const match = units.find(u => u.unitNumber === account.unitNumber);
+      unitId = match?.id;
     }
 
     const session: AuthSession = {
-      role: 'reception',
-      userName: 'Operador de Portaria 24h',
+      role: account.role,
+      accountId: account.id,
+      unitId,
+      unitNumber: account.unitNumber,
+      userName: account.name,
+      userEmail: account.email,
+      userPhone: account.phone,
       authenticatedAt: new Date().toISOString(),
     };
 
-    saveSession(session, rememberMe);
-    onSuccess(session);
+    saveSession(session);
+    onLoginSuccess(session);
   };
 
-  // Submit Admin Login
-  const handleAdminSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
-
-    const validUser = username.trim().toLowerCase() === DEFAULT_CREDENTIALS.admin.username;
-    const validPass = password === DEFAULT_CREDENTIALS.admin.password || 
-                      password === 'admin123' || 
-                      password === '302302';
-
-    if (!validUser || !validPass) {
-      setErrorMsg(`Credenciais inválidas para Administração. Utilize usuário "${DEFAULT_CREDENTIALS.admin.username}" e senha "${DEFAULT_CREDENTIALS.admin.password}".`);
-      return;
-    }
-
-    const session: AuthSession = {
-      role: 'admin',
-      userName: 'Administração Geral / Síndico',
-      authenticatedAt: new Date().toISOString(),
-    };
-
-    saveSession(session, rememberMe);
-    onSuccess(session);
-  };
-
-  // Quick fill helper
-  const handleQuickFill = (role: 'host' | 'reception' | 'admin') => {
-    setErrorMsg(null);
-    if (role === 'host') {
-      const sample = units[0]?.unitNumber || '101';
-      setUnitNumber(sample);
-      setHostPassword(DEFAULT_CREDENTIALS.host.defaultPassword);
-    } else if (role === 'reception') {
-      setUsername(DEFAULT_CREDENTIALS.reception.username);
-      setPassword(DEFAULT_CREDENTIALS.reception.password);
-    } else {
-      setUsername(DEFAULT_CREDENTIALS.admin.username);
-      setPassword(DEFAULT_CREDENTIALS.admin.password);
-    }
-  };
+  const approvedAccounts = accounts.filter(a => a.status === 'approved');
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative selection:bg-amber-500 selection:text-slate-950">
-      
-      {/* Background Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div className="w-full max-w-md relative z-10">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 relative max-h-[92vh] overflow-y-auto">
         
-        {/* Back to Guest Totem Button */}
+        {/* Back Button */}
         <button
-          onClick={onCancel}
-          className="mb-4 text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors group px-2 py-1 rounded-lg hover:bg-slate-900 w-fit"
+          onClick={onClose}
+          className="text-xs font-semibold text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors group px-2 py-1 rounded-lg hover:bg-slate-800 w-fit"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>Voltar ao Totem do Hóspede (Público)</span>
+          <span>Voltar ao Totem do Hóspede</span>
         </button>
 
-        {/* Card */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-          
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-1">
-              {selectedRole === 'host' && <KeyRound className="w-6 h-6" />}
-              {selectedRole === 'reception' && <Building2 className="w-6 h-6" />}
-              {selectedRole === 'admin' && <ShieldCheck className="w-6 h-6" />}
-            </div>
-
-            <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-              Área Restrita • Crystal Place Residence
-            </div>
-
-            <h2 className="text-2xl font-black text-white">
-              {selectedRole === 'host' && 'Portal do Anfitrião'}
-              {selectedRole === 'reception' && 'Portaria & Balcão 24h'}
-              {selectedRole === 'admin' && 'Administração & Síndico'}
-            </h2>
-
-            <p className="text-xs text-slate-400">
-              {selectedRole === 'host' && 'Acesso exclusivo para proprietários e anfitriões de unidades.'}
-              {selectedRole === 'reception' && 'Acesso operacional para recepcionistas e portaria física.'}
-              {selectedRole === 'admin' && 'Acesso executivo para síndico, conselho e auditoria do rodízio.'}
-            </p>
+        {/* Header */}
+        <div className="text-center space-y-1.5">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-1">
+            <Lock className="w-6 h-6" />
           </div>
-
-          {/* Role selector tabs within login */}
-          <div className="grid grid-cols-3 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
-            <button
-              type="button"
-              onClick={() => handleRoleChange('host')}
-              className={`py-2 px-1 rounded-lg font-medium transition-all text-center ${
-                selectedRole === 'host'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Anfitrião
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRoleChange('reception')}
-              className={`py-2 px-1 rounded-lg font-medium transition-all text-center ${
-                selectedRole === 'reception'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Portaria
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRoleChange('admin')}
-              className={`py-2 px-1 rounded-lg font-medium transition-all text-center ${
-                selectedRole === 'admin'
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Administrador
-            </button>
+          <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+            Área Restrita • Crystal Place Residence
           </div>
-
-          {/* Error Message */}
-          {errorMsg && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2 animate-shake">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {/* HOST FORM */}
-          {selectedRole === 'host' && (
-            <form onSubmit={handleHostSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Número do Apartamento (Torre Única)
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    value={unitNumber}
-                    onChange={(e) => setUnitNumber(e.target.value)}
-                    placeholder="Ex: 101, 204, 802..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-500 font-medium">
-                    Torre Única
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span>Senha de Acesso do Anfitrião</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[11px] text-amber-400 hover:underline flex items-center gap-1"
-                  >
-                    {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    <span>{showPassword ? 'Ocultar' : 'Mostrar'}</span>
-                  </button>
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={hostPassword}
-                  onChange={(e) => setHostPassword(e.target.value)}
-                  placeholder="Senha (padrão: 123)"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0"
-                  />
-                  <span>Lembrar meu apartamento</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill('host')}
-                  className="text-amber-400 hover:underline flex items-center gap-1 text-[11px]"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Preencher teste (Apto 101)</span>
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
-              >
-                <span>Acessar Portal do Anfitrião</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-
-          {/* RECEPTION FORM */}
-          {selectedRole === 'reception' && (
-            <form onSubmit={handleReceptionSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Usuário da Portaria
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Usuário (portaria)"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span>Senha Operacional</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[11px] text-amber-400 hover:underline flex items-center gap-1"
-                  >
-                    {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    <span>{showPassword ? 'Ocultar' : 'Mostrar'}</span>
-                  </button>
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Senha (padrão: 242)"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0"
-                  />
-                  <span>Lembrar neste terminal</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill('reception')}
-                  className="text-amber-400 hover:underline flex items-center gap-1 text-[11px]"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Preencher credencial</span>
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
-              >
-                <span>Acessar Painel da Portaria</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-
-          {/* ADMIN FORM */}
-          {selectedRole === 'admin' && (
-            <form onSubmit={handleAdminSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Usuário Administrador / Síndico
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Usuário (admin)"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span>Senha de Administrador</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-[11px] text-amber-400 hover:underline flex items-center gap-1"
-                  >
-                    {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    <span>{showPassword ? 'Ocultar' : 'Mostrar'}</span>
-                  </button>
-                </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Senha (padrão: 302)"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-700 bg-slate-950 text-amber-500 focus:ring-0"
-                  />
-                  <span>Lembrar credencial</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleQuickFill('admin')}
-                  className="text-amber-400 hover:underline flex items-center gap-1 text-[11px]"
-                >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Preencher credencial</span>
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
-              >
-                <span>Acessar Painel de Administração</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-
-          {/* Credential Hints Box */}
-          <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 text-[11px] text-slate-400 space-y-1.5">
-            <div className="font-semibold text-slate-300 flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span>Credenciais Padrão do Sistema:</span>
-            </div>
-            <div className="grid grid-cols-1 gap-1 text-slate-400 pl-4 border-l border-slate-800">
-              <div>• <strong>Anfitrião:</strong> Qualquer Apto (ex: 101, 204) + Senha: <code className="text-amber-300">123</code></div>
-              <div>• <strong>Portaria:</strong> Usuário: <code className="text-amber-300">portaria</code> • Senha: <code className="text-amber-300">242</code></div>
-              <div>• <strong>Administrador:</strong> Usuário: <code className="text-amber-300">admin</code> • Senha: <code className="text-amber-300">302</code></div>
-            </div>
-          </div>
-
+          <h2 className="text-xl sm:text-2xl font-black text-white">
+            Acesso Restrito da Equipe
+          </h2>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Cadastre seus dados para validação da administração ou entre com cadastro aprovado.
+          </p>
         </div>
 
-      </div>
+        {/* Tab switch between Request and Login */}
+        <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 text-xs">
+          <button
+            type="button"
+            onClick={() => { setMode('request'); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`py-2 px-3 rounded-xl font-bold transition-all text-center flex items-center justify-center gap-2 ${
+              mode === 'request'
+                ? 'bg-amber-500 text-slate-950 shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Solicitar Acesso</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`py-2 px-3 rounded-xl font-bold transition-all text-center flex items-center justify-center gap-2 ${
+              mode === 'login'
+                ? 'bg-amber-500 text-slate-950 shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>Já Tenho Cadastro</span>
+          </button>
+        </div>
 
+        {/* Feedback messages */}
+        {errorMsg && (
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* MODE 1: SIMPLE REQUEST FORM (Nome, Email, Telefone, Tipo de Acesso) */}
+        {mode === 'request' && (
+          <form onSubmit={handleRegister} className="space-y-4">
+            
+            {/* Nome */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-amber-400" />
+                <span>Nome Completo</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Wellington Rodovalho"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-amber-400" />
+                <span>E-mail</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Ex: seuemail@exemplo.com"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
+              />
+            </div>
+
+            {/* Telefone / WhatsApp */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-amber-400" />
+                <span>Telefone (WhatsApp)</span>
+              </label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Ex: (62) 99999-8888"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-mono"
+              />
+            </div>
+
+            {/* Tipo de Acesso */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Tipo de Acesso Desejado
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRole('host')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold text-center flex flex-col items-center gap-1 transition-all ${
+                    role === 'host'
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-300 shadow'
+                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <KeyRound className="w-4 h-4" />
+                  <span>Anfitrião</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRole('reception')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold text-center flex flex-col items-center gap-1 transition-all ${
+                    role === 'reception'
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-300 shadow'
+                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>Portaria</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRole('admin')}
+                  className={`p-2.5 rounded-xl border text-xs font-bold text-center flex flex-col items-center gap-1 transition-all ${
+                    role === 'admin'
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-300 shadow'
+                      : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Admin</span>
+                </button>
+              </div>
+            </div>
+
+            {/* If Host: Apartment Number */}
+            {role === 'host' && (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Número do Apartamento na Torre Única
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={unitNumber}
+                  onChange={(e) => setUnitNumber(e.target.value)}
+                  placeholder="Ex: 101, 204, 302..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 font-mono focus:outline-none focus:border-amber-500"
+                />
+                <span className="text-[11px] text-slate-500 mt-1 block">
+                  Informe a unidade que você administra no condomínio.
+                </span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              <span>Enviar Cadastro para Validação do Admin</span>
+            </button>
+
+            <div className="text-[11px] text-center text-slate-500 flex items-center justify-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span>O Administrador recebe e valida o cadastro no painel.</span>
+            </div>
+          </form>
+        )}
+
+        {/* MODE 2: DIRECT LOGIN WITH APPROVED ACCOUNT */}
+        {mode === 'login' && (
+          <div className="space-y-4">
+            <form onSubmit={handleDirectLogin} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Seu E-mail ou Telefone Cadastrado
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={searchCredential}
+                  onChange={(e) => setSearchCredential(e.target.value)}
+                  placeholder="Digite seu e-mail ou telefone..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>Entrar no Sistema</span>
+              </button>
+            </form>
+
+            {/* Quick Demo Access Badges */}
+            <div className="pt-3 border-t border-slate-800 space-y-2">
+              <div className="text-xs font-semibold text-slate-400 flex items-center justify-between">
+                <span>Contas Validadas / Aprovadas:</span>
+                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-mono">
+                  {approvedAccounts.length} ativas
+                </span>
+              </div>
+
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {approvedAccounts.map((acc) => (
+                  <button
+                    key={acc.id}
+                    onClick={() => handleQuickLogin(acc)}
+                    className="w-full p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left transition-all flex items-center justify-between group"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-white group-hover:text-amber-300 flex items-center gap-1.5 truncate">
+                        <span>{acc.name}</span>
+                        {acc.unitNumber && (
+                          <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 rounded">
+                            Apto {acc.unitNumber}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {acc.role === 'admin' ? 'Administrador / Síndico' : acc.role === 'reception' ? 'Portaria 24h' : 'Anfitrião'} • {acc.email}
+                      </div>
+                    </div>
+
+                    <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1 flex-shrink-0 group-hover:translate-x-0.5 transition-transform">
+                      <span>Acessar</span>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };

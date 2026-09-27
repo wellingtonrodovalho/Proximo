@@ -1,51 +1,104 @@
 /**
- * Authentication and Role Session Management
+ * Authentication and Access Management
  * PROXIMO - Crystal Place Residence
  */
 
 export type UserRole = 'guest' | 'host' | 'reception' | 'admin';
+export type AccessRole = 'host' | 'reception' | 'admin';
+export type AccessStatus = 'pending' | 'approved' | 'rejected';
+
+export interface AccessAccount {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: AccessRole;
+  unitNumber?: string;
+  status: AccessStatus;
+  requestedAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
+}
 
 export interface AuthSession {
-  role: 'host' | 'reception' | 'admin';
-  unitId?: string; // For hosts
+  role: AccessRole;
+  accountId?: string;
+  unitId?: string;
   unitNumber?: string;
   userName: string;
+  userEmail: string;
+  userPhone: string;
   authenticatedAt: string;
 }
 
-const AUTH_STORAGE_KEYS = {
-  HOST_SESSION: 'proximo_auth_host',
-  RECEPTION_SESSION: 'proximo_auth_reception',
-  ADMIN_SESSION: 'proximo_auth_admin',
+const STORAGE_KEYS = {
+  SESSION: 'proximo_auth_session',
+  ACCOUNTS: 'proximo_access_accounts_v1',
 };
 
-// Default passwords
-export const DEFAULT_CREDENTIALS = {
-  host: {
-    defaultPassword: '123',
-    hint: 'Número do Apto + Senha (padrão: 123)',
+// Seed default approved accounts
+export const INITIAL_ACCOUNTS: AccessAccount[] = [
+  {
+    id: 'acc-admin',
+    name: 'Wellington Rodovalho (Síndico)',
+    email: 'admin@crystalplace.condo',
+    phone: '(62) 99999-0001',
+    role: 'admin',
+    status: 'approved',
+    requestedAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
+    approvedBy: 'Sistema Master',
   },
-  reception: {
-    username: 'portaria',
-    password: '242',
-    hint: 'Usuário: portaria • Senha: 242',
+  {
+    id: 'acc-portaria',
+    name: 'Portaria & Balcão 24h',
+    email: 'portaria@crystalplace.condo',
+    phone: '(62) 99999-0002',
+    role: 'reception',
+    status: 'approved',
+    requestedAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
+    approvedBy: 'Administração',
   },
-  admin: {
-    username: 'admin',
-    password: '302',
-    hint: 'Usuário: admin • Senha: 302',
+  {
+    id: 'acc-host-101',
+    name: 'Dr. Roberto Silveira',
+    email: 'roberto@crystalplace.condo',
+    phone: '(62) 98111-0101',
+    role: 'host',
+    unitNumber: '101',
+    status: 'approved',
+    requestedAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
+    approvedBy: 'Administração',
   },
-};
+];
 
-export function getStoredSession(role: 'host' | 'reception' | 'admin'): AuthSession | null {
+export function loadAccessAccounts(): AccessAccount[] {
   try {
-    const key = role === 'host' 
-      ? AUTH_STORAGE_KEYS.HOST_SESSION 
-      : role === 'reception' 
-        ? AUTH_STORAGE_KEYS.RECEPTION_SESSION 
-        : AUTH_STORAGE_KEYS.ADMIN_SESSION;
-    
-    const raw = sessionStorage.getItem(key) || localStorage.getItem(key);
+    const raw = localStorage.getItem(STORAGE_KEYS.ACCOUNTS);
+    if (!raw) {
+      saveAccessAccounts(INITIAL_ACCOUNTS);
+      return INITIAL_ACCOUNTS;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_ACCOUNTS;
+  } catch {
+    return INITIAL_ACCOUNTS;
+  }
+}
+
+export function saveAccessAccounts(accounts: AccessAccount[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+  } catch (e) {
+    console.error('Failed to save access accounts', e);
+  }
+}
+
+export function getStoredSession(): AuthSession | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEYS.SESSION) || localStorage.getItem(STORAGE_KEYS.SESSION);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -53,34 +106,20 @@ export function getStoredSession(role: 'host' | 'reception' | 'admin'): AuthSess
   }
 }
 
-export function saveSession(session: AuthSession, remember: boolean = true): void {
+export function saveSession(session: AuthSession): void {
   try {
-    const key = session.role === 'host' 
-      ? AUTH_STORAGE_KEYS.HOST_SESSION 
-      : session.role === 'reception' 
-        ? AUTH_STORAGE_KEYS.RECEPTION_SESSION 
-        : AUTH_STORAGE_KEYS.ADMIN_SESSION;
-    
     const serialized = JSON.stringify(session);
-    sessionStorage.setItem(key, serialized);
-    if (remember) {
-      localStorage.setItem(key, serialized);
-    }
+    sessionStorage.setItem(STORAGE_KEYS.SESSION, serialized);
+    localStorage.setItem(STORAGE_KEYS.SESSION, serialized);
   } catch (e) {
-    console.error('Failed to save auth session', e);
+    console.error('Failed to save session', e);
   }
 }
 
-export function clearSession(role: 'host' | 'reception' | 'admin'): void {
+export function clearSession(): void {
   try {
-    const key = role === 'host' 
-      ? AUTH_STORAGE_KEYS.HOST_SESSION 
-      : role === 'reception' 
-        ? AUTH_STORAGE_KEYS.RECEPTION_SESSION 
-        : AUTH_STORAGE_KEYS.ADMIN_SESSION;
-    
-    sessionStorage.removeItem(key);
-    localStorage.removeItem(key);
+    sessionStorage.removeItem(STORAGE_KEYS.SESSION);
+    localStorage.removeItem(STORAGE_KEYS.SESSION);
   } catch (e) {
     console.error('Failed to clear session', e);
   }
@@ -95,7 +134,6 @@ export function getRoleFromUrl(): UserRole {
   if (portal === 'portaria' || portal === 'reception' || portal === 'balcao') return 'reception';
   if (portal === 'admin' || portal === 'administracao' || portal === 'sindico') return 'admin';
   
-  // Also check hash
   const hash = window.location.hash.toLowerCase();
   if (hash.includes('anfitriao') || hash.includes('host')) return 'host';
   if (hash.includes('portaria') || hash.includes('reception')) return 'reception';

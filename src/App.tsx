@@ -25,8 +25,13 @@ import { createAuditEntry } from './utils/audit';
 import { playChime } from './utils/audio';
 import { 
   UserRole, 
+  AccessRole,
+  AccessAccount,
   AuthSession, 
+  loadAccessAccounts,
+  saveAccessAccounts,
   getStoredSession, 
+  saveSession,
   clearSession, 
   getRoleFromUrl, 
   getUnitParamFromUrl,
@@ -50,39 +55,37 @@ export default function App() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => loadAuditLogs());
   const [config, setConfig] = useState<SystemConfig>(() => loadConfig());
 
-  // UI & Session State
-  const [hostSession, setHostSession] = useState<AuthSession | null>(() => getStoredSession('host'));
-  const [receptionSession, setReceptionSession] = useState<AuthSession | null>(() => getStoredSession('reception'));
-  const [adminSession, setAdminSession] = useState<AuthSession | null>(() => getStoredSession('admin'));
+  // Access Accounts & Auth Session State
+  const [accessAccounts, setAccessAccounts] = useState<AccessAccount[]>(() => loadAccessAccounts());
+  const [session, setSession] = useState<AuthSession | null>(() => getStoredSession());
 
   const [activeTab, setActiveTab] = useState<'guest' | 'host' | 'reception' | 'admin'>(() => {
     const urlRole = getRoleFromUrl();
-    if (urlRole === 'host' && getStoredSession('host')) return 'host';
-    if (urlRole === 'reception' && getStoredSession('reception')) return 'reception';
-    if (urlRole === 'admin' && getStoredSession('admin')) return 'admin';
+    const stored = getStoredSession();
+    if (urlRole !== 'guest' && stored && (stored.role === urlRole || stored.role === 'admin')) {
+      return urlRole;
+    }
     return 'guest';
   });
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(() => {
     const urlRole = getRoleFromUrl();
-    if (urlRole === 'host' && !getStoredSession('host')) return true;
-    if (urlRole === 'reception' && !getStoredSession('reception')) return true;
-    if (urlRole === 'admin' && !getStoredSession('admin')) return true;
+    const stored = getStoredSession();
+    if (urlRole !== 'guest' && !stored) return true;
     return false;
   });
 
-  const [loginTargetRole, setLoginTargetRole] = useState<'host' | 'reception' | 'admin'>(() => {
+  const [loginTargetRole, setLoginTargetRole] = useState<AccessRole>(() => {
     const urlRole = getRoleFromUrl();
     if (urlRole === 'host' || urlRole === 'reception' || urlRole === 'admin') return urlRole;
     return 'host';
   });
 
-  const [loginInitialUnit, setLoginInitialUnit] = useState<string | null>(() => getUnitParamFromUrl());
   const [isShareLinksOpen, setIsShareLinksOpen] = useState<boolean>(false);
 
   const [currentHostUnitId, setCurrentHostUnitId] = useState<string>(() => {
-    const session = getStoredSession('host');
-    if (session?.unitId) return session.unitId;
+    const stored = getStoredSession();
+    if (stored?.unitId) return stored.unitId;
     return getSelectedHostUnitId();
   });
 
@@ -93,48 +96,39 @@ export default function App() {
   // Active in-progress request for the Totem and Host alert
   const activeRequest = requests.find(r => r.status === 'waiting_host' || r.status === 'accepted') || null;
 
+  // Sync access accounts to storage
+  useEffect(() => {
+    saveAccessAccounts(accessAccounts);
+  }, [accessAccounts]);
+
   const updateUrlForRole = useCallback((role: 'guest' | 'host' | 'reception' | 'admin', unitNumber?: string) => {
     if (typeof window === 'undefined') return;
     const url = buildPortalUrl(role, unitNumber);
     window.history.replaceState({}, '', url);
   }, []);
 
-  const handleOpenLogin = useCallback((role: 'host' | 'reception' | 'admin' = 'host', initialUnit?: string | null) => {
+  const handleOpenLogin = useCallback((role: AccessRole = 'host') => {
     setLoginTargetRole(role);
-    if (initialUnit !== undefined) setLoginInitialUnit(initialUnit);
     setIsLoginModalOpen(true);
   }, []);
 
-  const handleLoginSuccess = useCallback((session: AuthSession) => {
-    if (session.role === 'host') {
-      setHostSession(session);
-      if (session.unitId) {
-        setCurrentHostUnitId(session.unitId);
-      }
-    } else if (session.role === 'reception') {
-      setReceptionSession(session);
-    } else if (session.role === 'admin') {
-      setAdminSession(session);
+  const handleLoginSuccess = useCallback((newSession: AuthSession) => {
+    setSession(newSession);
+    saveSession(newSession);
+    if (newSession.unitId) {
+      setCurrentHostUnitId(newSession.unitId);
     }
-    setActiveTab(session.role);
+    setActiveTab(newSession.role);
     setIsLoginModalOpen(false);
-    updateUrlForRole(session.role, session.unitNumber);
+    updateUrlForRole(newSession.role, newSession.unitNumber);
   }, [updateUrlForRole]);
 
   const handleLogout = useCallback(() => {
-    if (activeTab === 'host') {
-      clearSession('host');
-      setHostSession(null);
-    } else if (activeTab === 'reception') {
-      clearSession('reception');
-      setReceptionSession(null);
-    } else if (activeTab === 'admin') {
-      clearSession('admin');
-      setAdminSession(null);
-    }
+    clearSession();
+    setSession(null);
     setActiveTab('guest');
     updateUrlForRole('guest');
-  }, [activeTab, updateUrlForRole]);
+  }, [updateUrlForRole]);
 
   const handleTabChange = useCallback((tab: 'guest' | 'host' | 'reception' | 'admin') => {
     if (tab === 'guest') {
@@ -142,29 +136,88 @@ export default function App() {
       updateUrlForRole('guest');
       return;
     }
-    if (tab === 'host') {
-      if (hostSession) {
-        setActiveTab('host');
-        updateUrlForRole('host', hostSession.unitNumber);
-      } else {
-        handleOpenLogin('host');
-      }
-    } else if (tab === 'reception') {
-      if (receptionSession) {
-        setActiveTab('reception');
-        updateUrlForRole('reception');
-      } else {
-        handleOpenLogin('reception');
-      }
-    } else if (tab === 'admin') {
-      if (adminSession) {
-        setActiveTab('admin');
-        updateUrlForRole('admin');
-      } else {
-        handleOpenLogin('admin');
-      }
+    if (session && (session.role === tab || session.role === 'admin')) {
+      setActiveTab(tab);
+      updateUrlForRole(tab, session.unitNumber);
+    } else {
+      handleOpenLogin(tab);
     }
-  }, [hostSession, receptionSession, adminSession, handleOpenLogin, updateUrlForRole]);
+  }, [session, handleOpenLogin, updateUrlForRole]);
+
+  // Handle request for new access (Nome, Email, Telefone, Tipo de Acesso)
+  const handleRequestAccess = useCallback((newAccData: Omit<AccessAccount, 'id' | 'status' | 'requestedAt'>) => {
+    const newAccount: AccessAccount = {
+      ...newAccData,
+      id: `acc-${Date.now()}`,
+      status: 'pending',
+      requestedAt: new Date().toISOString(),
+    };
+    setAccessAccounts(prev => [newAccount, ...prev]);
+
+    const actorType: 'Anfitrião' | 'Portaria' | 'Síndico/Admin' = 
+      newAccount.role === 'admin' ? 'Síndico/Admin' : newAccount.role === 'reception' ? 'Portaria' : 'Anfitrião';
+
+    const log = createAuditEntry(
+      'ACCESS_REQUEST_CREATED',
+      actorType,
+      `Solicitação de acesso cadastrada: ${newAccount.name} (${newAccount.role}${newAccount.unitNumber ? ` - Apto ${newAccount.unitNumber}` : ''}). E-mail: ${newAccount.email}, Tel: ${newAccount.phone}. Pendente de validação pelo Administrador.`,
+      { unitNumber: newAccount.unitNumber },
+      auditLogs
+    );
+    setAuditLogs(prev => [log, ...prev]);
+  }, [auditLogs]);
+
+  // Admin approves account
+  const handleApproveAccount = useCallback((accountId: string) => {
+    setAccessAccounts(prev => prev.map(a => {
+      if (a.id === accountId) {
+        return {
+          ...a,
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+          approvedBy: 'Administrador / Síndico',
+        };
+      }
+      return a;
+    }));
+
+    const target = accessAccounts.find(a => a.id === accountId);
+    if (target) {
+      const log = createAuditEntry(
+        'ACCESS_ACCOUNT_APPROVED',
+        'Síndico/Admin',
+        `Cadastro de acesso validado e aprovado: ${target.name} (${target.role}${target.unitNumber ? ` - Apto ${target.unitNumber}` : ''}). Acesso liberado no sistema.`,
+        { unitNumber: target.unitNumber },
+        auditLogs
+      );
+      setAuditLogs(prev => [log, ...prev]);
+    }
+  }, [accessAccounts, auditLogs]);
+
+  // Admin rejects account
+  const handleRejectAccount = useCallback((accountId: string) => {
+    setAccessAccounts(prev => prev.map(a => {
+      if (a.id === accountId) {
+        return {
+          ...a,
+          status: 'rejected',
+        };
+      }
+      return a;
+    }));
+
+    const target = accessAccounts.find(a => a.id === accountId);
+    if (target) {
+      const log = createAuditEntry(
+        'ACCESS_ACCOUNT_REJECTED',
+        'Síndico/Admin',
+        `Cadastro de acesso recusado: ${target.name} (${target.role}).`,
+        { unitNumber: target.unitNumber },
+        auditLogs
+      );
+      setAuditLogs(prev => [log, ...prev]);
+    }
+  }, [accessAccounts, auditLogs]);
 
   // Sync current host unit id to storage
   useEffect(() => {
@@ -622,6 +675,7 @@ export default function App() {
 
   const activeQueueCount = units.filter(u => u.isEligibleByAdmin && u.isAvailableByHost).length;
   const pendingRequestsCount = requests.filter(r => r.status === 'waiting_host').length;
+  const currentUnit = units.find(u => u.id === currentHostUnitId);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950">
@@ -629,7 +683,7 @@ export default function App() {
       {/* Top Navigation & Role Switcher */}
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         activeQueueCount={activeQueueCount}
         totalUnitsCount={units.length}
         pendingRequestsCount={pendingRequestsCount}
@@ -637,6 +691,11 @@ export default function App() {
         setSoundEnabled={setSoundEnabled}
         onOpenSimulate={() => setIsSimulateModalOpen(true)}
         onOpenQrPlaque={() => setIsQrPlaqueOpen(true)}
+        onOpenShareLinks={() => setIsShareLinksOpen(true)}
+        onOpenLogin={(role) => handleOpenLogin(role || 'host')}
+        onLogout={handleLogout}
+        currentHostUnitNumber={currentUnit?.unitNumber}
+        authenticatedUserName={session?.userName}
       />
 
       {/* Active Assignment Live Notification Bar */}
@@ -735,6 +794,9 @@ export default function App() {
             onToggleUnitAdminEligibility={handleToggleUnitAdminEligibility}
             onUpdateConfig={setConfig}
             onResetSystemData={handleResetSystemData}
+            accessAccounts={accessAccounts}
+            onApproveAccount={handleApproveAccount}
+            onRejectAccount={handleRejectAccount}
           />
         )}
       </main>
@@ -765,6 +827,25 @@ export default function App() {
         isOpen={isSimulateModalOpen}
         onClose={() => setIsSimulateModalOpen(false)}
         onSimulateGuest={handleGuestSubmit}
+      />
+
+      {/* Simple Access Modal (Nome, Email, Telefone, Tipo de Acesso + Validação Admin) */}
+      <PortalLogin
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        accounts={accessAccounts}
+        units={units}
+        onRequestAccess={handleRequestAccess}
+        onLoginSuccess={handleLoginSuccess}
+        initialRole={loginTargetRole}
+      />
+
+      {/* Share Links Modal */}
+      <ShareLinksModal
+        isOpen={isShareLinksOpen}
+        onClose={() => setIsShareLinksOpen(false)}
+        complexName={config.complexName}
+        currentHostUnitNumber={currentUnit?.unitNumber}
       />
 
     </div>
