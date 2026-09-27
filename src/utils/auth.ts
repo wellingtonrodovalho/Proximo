@@ -33,44 +33,21 @@ export interface AuthSession {
 
 const STORAGE_KEYS = {
   SESSION: 'proximo_auth_session',
-  ACCOUNTS: 'proximo_access_accounts_v1',
+  ACCOUNTS: 'proximo_access_accounts_clean_v1',
 };
 
-// Seed default approved accounts
+// Seed only master admin account ready for test validation
 export const INITIAL_ACCOUNTS: AccessAccount[] = [
   {
     id: 'acc-admin',
-    name: 'Wellington Rodovalho (Síndico)',
-    email: 'admin@crystalplace.condo',
+    name: 'Wellington Rodovalho (Síndico/Admin)',
+    email: 'Wellington.Rodovalho@gmail.com',
     phone: '(62) 99999-0001',
     role: 'admin',
     status: 'approved',
     requestedAt: new Date().toISOString(),
     approvedAt: new Date().toISOString(),
     approvedBy: 'Sistema Master',
-  },
-  {
-    id: 'acc-portaria',
-    name: 'Portaria & Balcão 24h',
-    email: 'portaria@crystalplace.condo',
-    phone: '(62) 99999-0002',
-    role: 'reception',
-    status: 'approved',
-    requestedAt: new Date().toISOString(),
-    approvedAt: new Date().toISOString(),
-    approvedBy: 'Administração',
-  },
-  {
-    id: 'acc-host-101',
-    name: 'Dr. Roberto Silveira',
-    email: 'roberto@crystalplace.condo',
-    phone: '(62) 98111-0101',
-    role: 'host',
-    unitNumber: '101',
-    status: 'approved',
-    requestedAt: new Date().toISOString(),
-    approvedAt: new Date().toISOString(),
-    approvedBy: 'Administração',
   },
 ];
 

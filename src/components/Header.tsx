@@ -12,7 +12,8 @@ import {
   LogOut,
   Share2,
   ExternalLink,
-  UserCheck
+  UserCheck,
+  FileText
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -28,6 +29,7 @@ interface HeaderProps {
   onOpenShareLinks: () => void;
   onOpenLogin: (role?: 'host' | 'reception' | 'admin') => void;
   onLogout: () => void;
+  onOpenManual?: () => void;
   currentHostUnitNumber?: string;
   authenticatedUserName?: string;
 }
@@ -45,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenShareLinks,
   onOpenLogin,
   onLogout,
+  onOpenManual,
   currentHostUnitNumber,
   authenticatedUserName,
 }) => {
@@ -111,6 +114,19 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Simulador</span>
               </button>
 
+              {/* Instructions Manual PDF Button */}
+              {onOpenManual && (
+                <button
+                  onClick={onOpenManual}
+                  className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 text-xs font-bold rounded-xl border border-amber-500/30 hover:border-amber-500/50 shadow-sm transition-all"
+                  title="Manual Oficial de Instruções em PDF (Anfitrião, Recepção e Administrador)"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Manual (PDF)</span>
+                  <span className="sm:hidden">Manual</span>
+                </button>
+              )}
+
               {/* Discreet Staff & Host Login Button */}
               <button
                 onClick={() => onOpenLogin('host')}
@@ -165,6 +181,18 @@ export const Header: React.FC<HeaderProps> = ({
                 <Share2 className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Compartilhar Links</span>
               </button>
+
+              {/* Instructions Manual PDF Button */}
+              {onOpenManual && (
+                <button
+                  onClick={onOpenManual}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white rounded-xl text-xs font-bold border border-amber-500/30 transition-all"
+                  title="Manual Oficial de Instruções em PDF"
+                >
+                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden lg:inline">Manual (PDF)</span>
+                </button>
+              )}
 
               {/* Print Plaque Button (Reception / Admin) */}
               {(activeTab === 'admin' || activeTab === 'reception') && (

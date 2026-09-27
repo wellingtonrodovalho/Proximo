@@ -11,7 +11,8 @@ import {
   Building2, 
   ShieldCheck, 
   Lock,
-  Sparkles
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import { buildPortalUrl } from '../utils/auth';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
@@ -21,6 +22,7 @@ interface ShareLinksModalProps {
   onClose: () => void;
   complexName: string;
   currentHostUnitNumber?: string;
+  onOpenManual?: () => void;
 }
 
 export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
@@ -28,6 +30,7 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
   onClose,
   complexName,
   currentHostUnitNumber,
+  onOpenManual,
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -240,6 +243,28 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* 5. MANUAL PDF BANNER */}
+          {onOpenManual && (
+            <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-500/5 rounded-2xl border border-amber-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Manual Completo de Instruções (PDF)</h4>
+                  <span className="text-[11px] text-slate-400">Diretrizes detalhadas para Anfitriões, Portaria e Administração</span>
+                </div>
+              </div>
+              <button
+                onClick={onOpenManual}
+                className="w-full sm:w-auto px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Visualizar / Baixar PDF</span>
+              </button>
+            </div>
+          )}
 
         </div>
 

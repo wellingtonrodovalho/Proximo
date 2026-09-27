@@ -2,12 +2,23 @@ import { Unit, UnitTypology, UnitBlock, GuestRequest, AuditLog, SystemConfig } f
 import { createAuditEntry } from './audit';
 
 const STORAGE_KEYS = {
-  UNITS: 'rotativo302_units',
-  REQUESTS: 'rotativo302_requests',
-  AUDIT: 'rotativo302_audit',
-  CONFIG: 'rotativo302_config',
+  UNITS: 'rotativo302_units_clean_v1',
+  REQUESTS: 'rotativo302_requests_clean_v1',
+  AUDIT: 'rotativo302_audit_clean_v1',
+  CONFIG: 'rotativo302_config_clean_v1',
   CURRENT_USER_HOST_UNIT: 'rotativo302_current_host_unit',
 };
+
+// Purge legacy mock data from browser localStorage to ensure clean test state
+if (typeof window !== 'undefined') {
+  try {
+    ['rotativo302_units', 'rotativo302_requests', 'rotativo302_audit', 'rotativo302_config', 'proximo_access_accounts_v1'].forEach(k => {
+      localStorage.removeItem(k);
+    });
+  } catch (e) {
+    // Ignore storage errors in restricted contexts
+  }
+}
 
 const SAMPLE_OWNERS = [
   { name: 'Dr. Roberto Silveira', email: 'roberto.silveira@email.com', phone: '(11) 98765-4321' },
@@ -137,10 +148,10 @@ export function generate302Units(): Unit[] {
         ineligibleReason,
         isAvailableByHost,
         queuePosition: isAvailableByHost ? queueSeed++ : 9999,
-        totalBookingsCompleted: Math.floor((count * 3) % 15),
-        totalCallsReceived: Math.floor((count * 4) % 20),
-        totalRejections: Math.floor((count * 2) % 4),
-        totalTimeouts: Math.floor(count % 3),
+        totalBookingsCompleted: 0,
+        totalCallsReceived: 0,
+        totalRejections: 0,
+        totalTimeouts: 0,
         amenities: ['Wi-Fi 500Mbps', 'Ar Condicionado Dual Inverter', 'Smart TV 55"', 'Cozinha Completa', 'Garagem Coberta'],
         houseRules: ['Não fumante', 'Silêncio após 22h', 'Proibido festas e eventos'],
         photoUrl,
@@ -175,14 +186,14 @@ export function loadUnits(): Unit[] {
     const raw = localStorage.getItem(STORAGE_KEYS.UNITS);
     if (raw) {
       const parsed: Unit[] = JSON.parse(raw);
-      // Ensure data conforms to new constraints: minimum R$ 200 and bed configuration
+      // Ensure data conforms to constraints: minimum R$ 200 and bed configuration
       const sanitized = parsed.map((u, idx) => ({
         ...u,
         block: 'Torre Única' as const,
         roomsCount: 1 as const,
         typology: '1 Quarto' as const,
         basePrice: Math.max(200, u.basePrice || 200),
-        whatsapp: u.whatsapp || u.ownerPhone || '(11) 98765-4321',
+        whatsapp: u.whatsapp || u.ownerPhone || '(62) 99999-0001',
         bedsCount: u.bedsCount || (idx % 2 === 0 ? 2 : 1),
         bedSummary: u.bedSummary || (idx % 2 === 0 ? '1 Cama Queen + 1 Sofá-Cama' : '1 Cama Casal Queen'),
         bedTypes: u.bedTypes && u.bedTypes.length > 0 ? u.bedTypes : [
@@ -225,52 +236,8 @@ export function loadRequests(): GuestRequest[] {
     console.error('Failed to load requests from storage', e);
   }
 
-  // Seed with one sample recent walk-in request for immediate rich UI
-  const initial: GuestRequest[] = [
-    {
-      id: 'req-sample-01',
-      voucherCode: 'BAL-7042',
-      guestName: 'Dr. Leonardo Castilho',
-      guestDocument: '042.891.332-90',
-      guestPhone: '(11) 99882-1400',
-      guestsCount: 2,
-      nightsCount: 3,
-      checkInDate: new Date().toISOString().split('T')[0],
-      checkOutDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
-      typologyPreferred: '1 Quarto',
-      petFriendly: false,
-      status: 'checked_in',
-      currentAttemptIndex: 0,
-      estimatedWaitMinutes: 2,
-      queuePositionAtEntry: 1,
-      deviceNotified: true,
-      callAttempts: [
-        {
-          unitId: 'unit-201',
-          unitNumber: '201',
-          block: 'Torre Única',
-          ownerName: 'Dr. Roberto Silveira',
-          calledAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-          respondedAt: new Date(Date.now() - 3600000 * 2 + 120000).toISOString(),
-          outcome: 'accepted',
-          responseTimeSeconds: 120,
-        },
-      ],
-      assignedUnitId: 'unit-201',
-      assignedUnitNumber: '201',
-      assignedUnitBlock: 'Torre Única',
-      assignedHostName: 'Dr. Roberto Silveira',
-      assignedHostPhone: '(11) 98765-4321',
-      assignedUnitBedSummary: '1 Cama Queen + 1 Sofá-Cama',
-      expiresAt: new Date().toISOString(),
-      totalAmount: 860,
-      createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      updatedAt: new Date(Date.now() - 3600000 * 1.8).toISOString(),
-      receptionValidationKey: 'CHV-9921',
-      keyDeliveredAt: new Date(Date.now() - 3600000 * 1.8).toISOString(),
-      receptionistNotes: 'Documento original RG e CNH checados. Cartão de acesso magnético #14 entregue.',
-    },
-  ];
+  // Clean test state: starts with 0 requests
+  const initial: GuestRequest[] = [];
   saveRequests(initial);
   return initial;
 }
@@ -294,37 +261,7 @@ export function loadAuditLogs(): AuditLog[] {
     createAuditEntry(
       'SYSTEM_INITIALIZED',
       'Sistema Autônomo',
-      'Sistema Round Robin 302 inicializado com 302 unidades registradas. Portaria configurada em Modo Neutro (sem poder de escolha manual).'
-    ),
-    createAuditEntry(
-      'GUEST_CHECKIN_INITIATED',
-      'Hóspede',
-      'Hóspede Dr. Leonardo Castilho solicitou aluguel de balcão via QR Code da portaria (Voucher BAL-7042).',
-      { voucherCode: 'BAL-7042', guestName: 'Dr. Leonardo Castilho' }
-    ),
-    createAuditEntry(
-      'UNIT_CALLED_ROUND_ROBIN',
-      'Sistema Autônomo',
-      'Sistema acionou a Unidade 201 (Torre A) por ser a 1ª da fila virtual rotativa.',
-      { unitNumber: '201', voucherCode: 'BAL-7042' }
-    ),
-    createAuditEntry(
-      'HOST_ACCEPTED',
-      'Anfitrião',
-      'Anfitrião Dr. Roberto Silveira aceitou a reserva em 2m00s.',
-      { unitNumber: '201', voucherCode: 'BAL-7042' }
-    ),
-    createAuditEntry(
-      'QUEUE_ROTATED_TO_END',
-      'Sistema Autônomo',
-      'Regra Round Robin executada: Unidade 201 movida automaticamente para o final da fila de disponibilidade.',
-      { unitNumber: '201' }
-    ),
-    createAuditEntry(
-      'RECEPTION_KEY_ISSUED',
-      'Portaria',
-      'Portaria validou documento de Dr. Leonardo Castilho e liberou chave com Chaveiro magnético #14. Zero intervenção na escolha da unidade.',
-      { unitNumber: '201', voucherCode: 'BAL-7042' }
+      'Sistema PROXIMO inicializado e pronto para testes no Crystal Place Residence. Fila autônoma Round Robin ativa.'
     ),
   ];
   saveAuditLogs(initial);
@@ -336,6 +273,28 @@ export function saveAuditLogs(logs: AuditLog[]): void {
     localStorage.setItem(STORAGE_KEYS.AUDIT, JSON.stringify(logs));
   } catch (e) {
     console.error('Failed to save audit logs', e);
+  }
+}
+
+export function clearAllTestData(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.REQUESTS);
+    localStorage.removeItem(STORAGE_KEYS.AUDIT);
+    localStorage.removeItem('proximo_access_accounts_clean_v1');
+    localStorage.removeItem('proximo_auth_session');
+    sessionStorage.clear();
+    const freshUnits = generate302Units();
+    saveUnits(freshUnits);
+    saveRequests([]);
+    saveAuditLogs([
+      createAuditEntry(
+        'SYSTEM_INITIALIZED',
+        'Sistema Autônomo',
+        'Sistema limpo e pronto para testes no Crystal Place Residence.'
+      ),
+    ]);
+  } catch (e) {
+    console.error('Failed to clear test data', e);
   }
 }
 

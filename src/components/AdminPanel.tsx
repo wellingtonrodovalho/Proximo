@@ -42,6 +42,7 @@ interface AdminPanelProps {
   accessAccounts?: AccessAccount[];
   onApproveAccount?: (accountId: string) => void;
   onRejectAccount?: (accountId: string) => void;
+  onOpenManual?: () => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -55,6 +56,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   accessAccounts = [],
   onApproveAccount,
   onRejectAccount,
+  onOpenManual,
 }) => {
   const [activeTab, setActiveTab] = useState<'units' | 'queue' | 'accounts' | 'audit' | 'metrics' | 'settings'>('units');
   const [searchUnit, setSearchUnit] = useState('');
@@ -149,6 +151,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             Monitore todas as 302 unidades, ative ou inative condôminos no rodízio, 
             e consulte a trilha de auditoria para garantir blindagem contra favorecimento.
           </p>
+          {onOpenManual && (
+            <div className="mt-3">
+              <button
+                onClick={onOpenManual}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+              >
+                <FileText className="w-3.5 h-3.5 text-amber-400" />
+                <span>Manual de Instruções em PDF (Todos os Níveis)</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Global Stats Grid */}

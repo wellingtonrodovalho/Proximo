@@ -27,6 +27,7 @@ import {
   UserRole, 
   AccessRole,
   AccessAccount,
+  INITIAL_ACCOUNTS,
   AuthSession, 
   loadAccessAccounts,
   saveAccessAccounts,
@@ -47,6 +48,7 @@ import { PrintableQrModal } from './components/PrintableQrModal';
 import { SimulateGuestModal } from './components/SimulateGuestModal';
 import { PortalLogin } from './components/PortalLogin';
 import { ShareLinksModal } from './components/ShareLinksModal';
+import { ManualModal } from './components/ManualModal';
 
 export default function App() {
   // Global State
@@ -92,6 +94,7 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [isQrPlaqueOpen, setIsQrPlaqueOpen] = useState<boolean>(false);
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState<boolean>(false);
+  const [isManualModalOpen, setIsManualModalOpen] = useState<boolean>(false);
 
   // Active in-progress request for the Totem and Host alert
   const activeRequest = requests.find(r => r.status === 'waiting_host' || r.status === 'accepted') || null;
@@ -655,21 +658,25 @@ export default function App() {
 
   // 10. SYSTEM RESET TO INITIAL PRISTINE DATA
   const handleResetSystemData = useCallback(() => {
-    if (confirm('Tem certeza que deseja restaurar as 302 unidades e redefinir o sistema para o padrão de fábrica?')) {
+    if (confirm('Tem certeza que deseja restaurar as 302 unidades e redefinir o sistema para o padrão limpo de teste?')) {
       const freshUnits = generate302Units();
       const freshConfig = getDefaultConfig();
       setUnits(freshUnits);
       setConfig(freshConfig);
       setRequests([]);
+      setAccessAccounts(INITIAL_ACCOUNTS);
+      saveAccessAccounts(INITIAL_ACCOUNTS);
+      clearSession();
+      setSession(null);
       const freshLog = createAuditEntry(
         'SYSTEM_INITIALIZED',
         'Síndico/Admin',
-        'Sistema restaurado para parâmetros padrão com 302 unidades registradas e integridade resetada.',
+        'Sistema restaurado para parâmetros padrão limpos de teste. Dados anteriores excluídos.',
         {},
         []
       );
       setAuditLogs([freshLog]);
-      alert('Sistema restaurado com sucesso!');
+      alert('Dados de teste restaurados com sucesso! O sistema está pronto.');
     }
   }, []);
 
@@ -694,6 +701,7 @@ export default function App() {
         onOpenShareLinks={() => setIsShareLinksOpen(true)}
         onOpenLogin={(role) => handleOpenLogin(role || 'host')}
         onLogout={handleLogout}
+        onOpenManual={() => setIsManualModalOpen(true)}
         currentHostUnitNumber={currentUnit?.unitNumber}
         authenticatedUserName={session?.userName}
       />
@@ -797,6 +805,7 @@ export default function App() {
             accessAccounts={accessAccounts}
             onApproveAccount={handleApproveAccount}
             onRejectAccount={handleRejectAccount}
+            onOpenManual={() => setIsManualModalOpen(true)}
           />
         )}
       </main>
@@ -846,6 +855,14 @@ export default function App() {
         onClose={() => setIsShareLinksOpen(false)}
         complexName={config.complexName}
         currentHostUnitNumber={currentUnit?.unitNumber}
+        onOpenManual={() => setIsManualModalOpen(true)}
+      />
+
+      {/* Official Instructions Manual PDF Modal */}
+      <ManualModal
+        isOpen={isManualModalOpen}
+        onClose={() => setIsManualModalOpen(false)}
+        condoName={config.complexName}
       />
 
     </div>
