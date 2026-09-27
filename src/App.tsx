@@ -18,7 +18,8 @@ import {
   getSelectedHostUnitId, 
   setSelectedHostUnitId,
   generate302Units,
-  getDefaultConfig
+  getDefaultConfig,
+  clearAllTestData
 } from './utils/storage';
 import { callNextHostInQueue, rotateUnitToEnd, reindexQueue } from './utils/roundRobin';
 import { createAuditEntry } from './utils/audit';
@@ -394,7 +395,7 @@ export default function App() {
     const logRotation = createAuditEntry(
       'QUEUE_ROTATED_TO_END',
       'Sistema Autônomo',
-      `Regra Round Robin executada: Apto ${targetUnit.unitNumber} completou locação e foi reposicionado no final da fila de balcão (Nova posição: #${rotatedUnits.find(u => u.id === unitId)?.queuePosition || 'N'}).`,
+      `Regra de rodízio executada: Apto ${targetUnit.unitNumber} completou locação e foi reposicionado no final da fila de balcão (Nova posição: #${rotatedUnits.find(u => u.id === unitId)?.queuePosition || 'N'}).`,
       { unitId: targetUnit.id, unitNumber: targetUnit.unitNumber, voucherCode: targetReq.voucherCode },
       [logAccepted, ...auditLogs]
     );
@@ -690,7 +691,8 @@ export default function App() {
 
   // 10. SYSTEM RESET TO INITIAL PRISTINE DATA
   const handleResetSystemData = useCallback(() => {
-    if (confirm('Tem certeza que deseja restaurar as 302 unidades e redefinir o sistema para o padrão limpo de teste?')) {
+    if (confirm('Tem certeza que deseja excluir todos os dados e redefinir o sistema para o estado limpo? Todas as informações de testes e registros serão apagadas.')) {
+      clearAllTestData();
       const freshUnits = generate302Units();
       const freshConfig = getDefaultConfig();
       setUnits(freshUnits);
@@ -703,12 +705,12 @@ export default function App() {
       const freshLog = createAuditEntry(
         'SYSTEM_INITIALIZED',
         'Síndico/Admin',
-        'Sistema restaurado para parâmetros padrão limpos de teste. Dados anteriores excluídos.',
+        'Base de dados limpa com sucesso no Crystal Place Residence. Todas as informações de teste foram excluídas.',
         {},
         []
       );
       setAuditLogs([freshLog]);
-      alert('Dados de teste restaurados com sucesso! O sistema está pronto.');
+      alert('Base de dados limpa com sucesso! Todas as informações anteriores foram excluídas e o sistema está pronto para uso real.');
     }
   }, []);
 

@@ -2,14 +2,14 @@ import { Unit, UnitTypology, UnitBlock, GuestRequest, AuditLog, SystemConfig } f
 import { createAuditEntry } from './audit';
 
 const STORAGE_KEYS = {
-  UNITS: 'rotativo302_units_pristine_v2',
-  REQUESTS: 'rotativo302_requests_pristine_v2',
-  AUDIT: 'rotativo302_audit_pristine_v2',
-  CONFIG: 'rotativo302_config_pristine_v2',
+  UNITS: 'rotativo302_units_v3_clean',
+  REQUESTS: 'rotativo302_requests_v3_clean',
+  AUDIT: 'rotativo302_audit_v3_clean',
+  CONFIG: 'rotativo302_config_v3_clean',
   CURRENT_USER_HOST_UNIT: 'rotativo302_current_host_unit',
 };
 
-// Purge legacy mock data from browser localStorage to ensure clean test state
+// Purge legacy and mock data from browser localStorage to guarantee completely clean database
 if (typeof window !== 'undefined') {
   try {
     [
@@ -22,7 +22,12 @@ if (typeof window !== 'undefined') {
       'rotativo302_requests_clean_v1',
       'rotativo302_audit_clean_v1',
       'rotativo302_config_clean_v1',
-      'proximo_access_accounts_clean_v1'
+      'proximo_access_accounts_clean_v1',
+      'rotativo302_units_pristine_v2',
+      'rotativo302_requests_pristine_v2',
+      'rotativo302_audit_pristine_v2',
+      'rotativo302_config_pristine_v2',
+      'proximo_access_accounts_pristine_v2',
     ].forEach(k => {
       localStorage.removeItem(k);
     });
@@ -30,21 +35,6 @@ if (typeof window !== 'undefined') {
     // Ignore storage errors in restricted contexts
   }
 }
-
-const SAMPLE_OWNERS = [
-  { name: 'Dr. Roberto Silveira', email: 'roberto.silveira@email.com', phone: '(11) 98765-4321' },
-  { name: 'Dra. Camila Alencar', email: 'camila.alencar@email.com', phone: '(21) 99123-8899' },
-  { name: 'Marcos Vinicius Pontes', email: 'mv.pontes@email.com', phone: '(31) 99874-5511' },
-  { name: 'Fernanda Meirelles', email: 'fer.meirelles@email.com', phone: '(41) 98452-3300' },
-  { name: 'Carlos Eduardo Ramos', email: 'carlos.ramos@email.com', phone: '(81) 97722-1144' },
-  { name: 'Juliana Fagundes', email: 'juliana.fagundes@email.com', phone: '(71) 99311-8822' },
-  { name: 'Ricardo Albuquerque', email: 'ricardo.albuquerque@email.com', phone: '(61) 98112-9900' },
-  { name: 'Beatriz Vasconcelos', email: 'bia.vasconcelos@email.com', phone: '(19) 98833-2211' },
-  { name: 'Alexandre Gouveia', email: 'alex.gouveia@email.com', phone: '(85) 99441-3322' },
-  { name: 'Patrícia Nogueira', email: 'patricia.nog@email.com', phone: '(48) 98411-7766' },
-  { name: 'Lucas Santana Mendes', email: 'lucas.santana@email.com', phone: '(11) 97654-1122' },
-  { name: 'Ana Paula Fontana', email: 'ana.fontana@email.com', phone: '(21) 98877-6655' },
-];
 
 const UNIT_PHOTOS: string[] = [
   'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
@@ -59,9 +49,11 @@ export function generate302Units(): Unit[] {
   const units: Unit[] = [];
   const block: UnitBlock = 'Torre Única';
   let count = 0;
-  let queueSeed = 1;
 
   // Single tower with 302 units (26 floors, 11-12 units per floor)
+  // All units start clean with NO mock owners.
+  // Owners are only registered when an actual host requests access and is accredited by the administrator.
+  // Exception: Unit 302 is pre-assigned to Wellington Rodovalho (Admin/Síndico & Anfitrião).
   for (let floor = 1; floor <= 26; floor++) {
     const unitsPerFloor = floor <= 16 ? 12 : 11;
     for (let u = 1; u <= unitsPerFloor; u++) {
@@ -69,8 +61,13 @@ export function generate302Units(): Unit[] {
       count++;
 
       const unitNumber = `${floor}${u < 10 ? '0' + u : u}`;
-      const ownerIndex = (count * 7) % SAMPLE_OWNERS.length;
-      const owner = SAMPLE_OWNERS[ownerIndex];
+      const isWellingtonUnit = unitNumber === '302';
+
+      // Clean state: no mock owners or fake data
+      const ownerName = isWellingtonUnit ? 'Wellington Rodovalho' : '';
+      const ownerEmail = isWellingtonUnit ? 'Wellington.Rodovalho@gmail.com' : '';
+      const ownerPhone = isWellingtonUnit ? '(62) 99999-0001' : '';
+      const whatsapp = isWellingtonUnit ? '(62) 99999-0001' : '';
 
       // Todos os imóveis do complexo possuem exatamente 1 quarto
       const typology: UnitTypology = '1 Quarto';
@@ -127,7 +124,7 @@ export function generate302Units(): Unit[] {
         basePrice += 60;
       }
 
-      // Administrative status: all units start eligible by default in clean test state
+      // Administrative status: all units start eligible by default in clean state
       const isEligibleByAdmin = true;
       const ineligibleReason = undefined;
 
@@ -149,10 +146,10 @@ export function generate302Units(): Unit[] {
         capacity,
         basePrice,
         cleaningFee: 80,
-        ownerName: owner.name,
-        ownerEmail: owner.email,
-        ownerPhone: owner.phone,
-        whatsapp: owner.phone, // Forma de contato oficial via WhatsApp
+        ownerName,
+        ownerEmail,
+        ownerPhone,
+        whatsapp,
         isEligibleByAdmin,
         ineligibleReason,
         isAvailableByHost,
@@ -263,8 +260,8 @@ export function loadAuditLogs(): AuditLog[] {
   const initial = [
     createAuditEntry(
       'SYSTEM_INITIALIZED',
-      'Sistema Autônomo',
-      'Sistema PROXIMO inicializado e pronto para testes no Crystal Place Residence. Fila autônoma Round Robin ativa.'
+      'Síndico/Admin',
+      'Sistema PROXIMO inicializado no Crystal Place Residence. Fila virtual neutra e transparente ativa.'
     ),
   ];
   saveAuditLogs(initial);
@@ -281,9 +278,11 @@ export function saveAuditLogs(logs: AuditLog[]): void {
 
 export function clearAllTestData(): void {
   try {
+    localStorage.removeItem(STORAGE_KEYS.UNITS);
     localStorage.removeItem(STORAGE_KEYS.REQUESTS);
     localStorage.removeItem(STORAGE_KEYS.AUDIT);
-    localStorage.removeItem('proximo_access_accounts_clean_v1');
+    localStorage.removeItem(STORAGE_KEYS.CONFIG);
+    localStorage.removeItem('proximo_access_accounts_v3_clean');
     localStorage.removeItem('proximo_auth_session');
     sessionStorage.clear();
     const freshUnits = generate302Units();
@@ -292,8 +291,8 @@ export function clearAllTestData(): void {
     saveAuditLogs([
       createAuditEntry(
         'SYSTEM_INITIALIZED',
-        'Sistema Autônomo',
-        'Sistema limpo e pronto para testes no Crystal Place Residence.'
+        'Síndico/Admin',
+        'Sistema limpo e inicializado no Crystal Place Residence. Nenhuma solicitação pendente.'
       ),
     ]);
   } catch (e) {
@@ -329,7 +328,7 @@ export function saveConfig(config: SystemConfig): void {
 }
 
 export function getSelectedHostUnitId(): string {
-  return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_HOST_UNIT) || 'unit-101';
+  return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_HOST_UNIT) || 'unit-302';
 }
 
 export function setSelectedHostUnitId(unitId: string): void {

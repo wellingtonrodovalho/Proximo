@@ -25,7 +25,8 @@ import {
   Mail,
   Phone,
   KeyRound,
-  Send
+  Send,
+  Trash2
 } from 'lucide-react';
 import { Unit, AuditLog, GuestRequest, SystemConfig, UnitBlock } from '../types';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
@@ -345,25 +346,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       </td>
 
                       <td className="py-3 px-4">
-                        <strong className="text-slate-200 block">{unit.ownerName}</strong>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-slate-400 text-[10px]">{unit.whatsapp || unit.ownerPhone}</span>
-                          {(unit.whatsapp || unit.ownerPhone) && (
-                            <a
-                              href={getWhatsAppDirectUrl(
-                                unit.whatsapp || unit.ownerPhone,
-                                `Olá ${unit.ownerName}! Contato da administração do Crystal Place Residence (App PROXIMO) referente ao Apto ${unit.unitNumber} (${unit.floor}º Andar).`
+                        {unit.ownerName ? (
+                          <>
+                            <strong className="text-slate-200 block">{unit.ownerName}</strong>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-slate-400 text-[10px]">{unit.whatsapp || unit.ownerPhone}</span>
+                              {(unit.whatsapp || unit.ownerPhone) && (
+                                <a
+                                  href={getWhatsAppDirectUrl(
+                                    unit.whatsapp || unit.ownerPhone,
+                                    `Olá ${unit.ownerName}! Contato da administração do Crystal Place Residence (App PROXIMO) referente ao Apto ${unit.unitNumber} (${unit.floor}º Andar).`
+                                  )}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-0.5 text-[9px] bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20"
+                                  title="Abrir conversa no WhatsApp"
+                                >
+                                  <MessageSquare className="w-2.5 h-2.5" />
+                                  <span>WA</span>
+                                </a>
                               )}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-0.5 text-[9px] bg-emerald-500/10 px-1 py-0.5 rounded border border-emerald-500/20"
-                              title="Abrir conversa no WhatsApp"
-                            >
-                              <MessageSquare className="w-2.5 h-2.5" />
-                              <span>WA</span>
-                            </a>
-                          )}
-                        </div>
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-slate-500 italic text-xs">
+                            Sem anfitrião credenciado
+                          </span>
+                        )}
                       </td>
 
                       {/* Host availability */}
@@ -373,9 +382,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             Disponível Hoje
                           </span>
+                        ) : !unit.ownerName ? (
+                          <span className="text-slate-600 text-[11px]">
+                            Aguardando credenciamento
+                          </span>
                         ) : (
                           <span className="text-slate-500 text-[11px]">
-                            Inativo pelo dono
+                            Inativo pelo anfitrião
                           </span>
                         )}
                       </td>
@@ -646,9 +659,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </h4>
               <button
                 onClick={onResetSystemData}
-                className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-xs rounded-xl border border-rose-500/30 transition-colors"
+                className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-xs rounded-xl border border-rose-500/30 transition-colors flex items-center gap-2"
               >
-                Restaurar Dados Padrão das 302 Unidades
+                <Trash2 className="w-4 h-4" />
+                <span>Excluir Toda a Base de Dados e Redefinir Sistema</span>
               </button>
             </div>
           </div>
@@ -792,10 +806,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                           <Phone className="w-3.5 h-3.5 text-slate-500" />
                           <span>{acc.phone}</span>
                         </span>
-                        <span className="text-[11px] text-slate-500">
-                          Solicitado em: {new Date(acc.requestedAt).toLocaleString('pt-BR')}
-                        </span>
-                        {acc.approvedBy && (
+                        {acc.id === 'acc-admin' ? (
+                          <span className="text-[11px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            Administrador Master • Acesso Ativo
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-500">
+                            Solicitado em: {new Date(acc.requestedAt).toLocaleString('pt-BR')}
+                          </span>
+                        )}
+                        {acc.approvedBy && acc.id !== 'acc-admin' && (
                           <span className="text-[11px] text-emerald-400">
                             Validado por: {acc.approvedBy}
                           </span>

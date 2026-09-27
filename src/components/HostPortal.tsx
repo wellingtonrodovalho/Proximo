@@ -444,9 +444,9 @@ export const HostPortal: React.FC<HostPortalProps> = ({
                 className="bg-slate-950 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
                 title="Trocar de Unidade para Gerenciar"
               >
-                {units.slice(0, 50).map(u => (
+                {units.slice(0, 100).map(u => (
                   <option key={u.id} value={u.id}>
-                    Apto {u.unitNumber} ({u.floor}º Andar) • {u.ownerName} • WA: {u.whatsapp || u.ownerPhone}
+                    Apto {u.unitNumber} ({u.floor}º Andar) {u.ownerName ? `• ${u.ownerName}` : '• Sem anfitrião credenciado'}
                   </option>
                 ))}
               </select>
@@ -463,27 +463,36 @@ export const HostPortal: React.FC<HostPortalProps> = ({
 
             {/* Responsible Person & WhatsApp Contact Details */}
             <div className="text-xs text-slate-400 mt-2 flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1.5 text-slate-200">
-                <User className="w-3.5 h-3.5 text-slate-400" />
-                <span>Responsável: <strong className="text-white font-semibold">{currentUnit?.ownerName}</strong></span>
-              </div>
-              <span>•</span>
-              <div className="flex items-center gap-1.5 text-emerald-300 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
-                <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                <span>WhatsApp: {currentUnit?.whatsapp || currentUnit?.ownerPhone}</span>
-                {currentWhatsAppUrl && (
-                  <a
-                    href={currentWhatsAppUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Testar conversa no WhatsApp com o responsável"
-                    className="ml-1 text-emerald-400 hover:text-emerald-200 hover:underline flex items-center gap-0.5 text-[10px]"
-                  >
-                    <span>Testar</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                )}
-              </div>
+              {currentUnit?.ownerName ? (
+                <>
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Responsável: <strong className="text-white font-semibold">{currentUnit.ownerName}</strong></span>
+                  </div>
+                  <span>•</span>
+                  <div className="flex items-center gap-1.5 text-emerald-300 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WhatsApp: {currentUnit.whatsapp || currentUnit.ownerPhone}</span>
+                    {currentWhatsAppUrl && (
+                      <a
+                        href={currentWhatsAppUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Testar conversa no WhatsApp com o responsável"
+                        className="ml-1 text-emerald-400 hover:text-emerald-200 hover:underline flex items-center gap-0.5 text-[10px]"
+                      >
+                        <span>Testar</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 text-slate-400 italic">
+                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Sem anfitrião credenciado para esta unidade.</span>
+                </div>
+              )}
               <span>•</span>
               <span className="text-amber-400 font-medium">🛏️ {currentUnit?.bedSummary || `${currentUnit?.bedsCount || 1} Cama`}</span>
               <span>•</span>
@@ -964,7 +973,7 @@ export const HostPortal: React.FC<HostPortalProps> = ({
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Dra. Camila Alencar"
+                      placeholder="Ex: Wellington Rodovalho"
                       value={ownerName}
                       onChange={(e) => setOwnerName(e.target.value)}
                       className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"

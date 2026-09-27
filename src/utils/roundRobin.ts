@@ -170,7 +170,7 @@ export function callNextHostInQueue(
   const newLog = createAuditEntry(
     'UNIT_CALLED_ROUND_ROBIN',
     'Sistema Autônomo',
-    `Sistema Round Robin acionou a Unidade ${nextUnit.unitNumber} (${nextUnit.block} - Anfitrião: ${nextUnit.ownerName}, Camas: ${nextUnit.bedSummary}) com prazo de ${estimatedWaitMinutes} minutos. Notificação instantânea enviada ao aparelho do anfitrião. Fila posição: #${nextUnit.queuePosition}.`,
+    `Sistema de rodízio acionou a Unidade ${nextUnit.unitNumber} (${nextUnit.block} - Anfitrião: ${nextUnit.ownerName}, Camas: ${nextUnit.bedSummary}) com prazo de ${estimatedWaitMinutes} minutos. Notificação instantânea enviada ao aparelho do anfitrião. Fila posição: #${nextUnit.queuePosition}.`,
     {
       unitId: nextUnit.id,
       unitNumber: nextUnit.unitNumber,

@@ -204,7 +204,7 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
     {
       title: 'A. Princípio da Neutralidade Absoluta:',
       content:
-        'A portaria tem papel estritamente operacional e de segurança patrimonial. Nenhum porteiro ou recepcionista possui permissão de escolher, indicar ou favorecer qualquer unidade ou proprietário. Toda alocação é 100% autônoma pelo algoritmo Round Robin.'
+        'A portaria tem papel estritamente operacional e de segurança patrimonial. Nenhum porteiro ou recepcionista possui permissão de escolher, indicar ou favorecer qualquer unidade ou proprietário. Toda alocação é 100% autônoma, auditável e transparente.'
     },
     {
       title: 'B. Atendimento do Hóspede Walk-in (Passo a Passo):',

@@ -295,8 +295,9 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
 
               {filteredRequests.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-500">
-                    Nenhum registro de hóspede encontrado no histórico recente.
+                  <td colSpan={6} className="py-12 text-center text-slate-500">
+                    <p className="text-sm font-semibold text-slate-400">Nenhuma solicitação de hóspede no momento.</p>
+                    <p className="text-xs text-slate-500 mt-1">O balcão está livre aguardando novos atendimentos via QR Code ou cadastro presencial.</p>
                   </td>
                 </tr>
               )}

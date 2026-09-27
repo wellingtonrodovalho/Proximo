@@ -33,8 +33,19 @@ export interface AuthSession {
 
 const STORAGE_KEYS = {
   SESSION: 'proximo_auth_session',
-  ACCOUNTS: 'proximo_access_accounts_pristine_v2',
+  ACCOUNTS: 'proximo_access_accounts_v3_clean',
 };
+
+// Purge old account cache to guarantee clean state
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem('proximo_access_accounts_v1');
+    localStorage.removeItem('proximo_access_accounts_clean_v1');
+    localStorage.removeItem('proximo_access_accounts_pristine_v2');
+  } catch (e) {
+    // Ignore restricted storage contexts
+  }
+}
 
 // Seed master admin account who is also Host of Unit 302
 export const INITIAL_ACCOUNTS: AccessAccount[] = [
