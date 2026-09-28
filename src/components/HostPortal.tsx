@@ -29,7 +29,9 @@ import {
   User,
   Send,
   Building,
-  ShieldAlert
+  ShieldAlert,
+  Edit3,
+  Mail
 } from 'lucide-react';
 import { Unit, GuestRequest, SystemConfig, BedConfig, UnitBlock } from '../types';
 import { playChime } from '../utils/audio';
@@ -45,6 +47,7 @@ import {
   getWhatsAppDirectUrl, 
   getOfficialHostNotificationMessage 
 } from '../utils/whatsapp';
+import { EditUnitModal } from './EditUnitModal';
 
 interface HostPortalProps {
   units: Unit[];
@@ -57,6 +60,7 @@ interface HostPortalProps {
   onHostAccept: (requestId: string, unitId: string) => void;
   onHostReject: (requestId: string, unitId: string, reason: string) => void;
   config: SystemConfig;
+  onUpdateAccountProfile?: (profile: { name: string; phone: string; email: string }) => void;
 }
 
 const AVAILABLE_BED_TYPES: BedConfig['type'][] = [
@@ -78,11 +82,13 @@ export const HostPortal: React.FC<HostPortalProps> = ({
   onHostAccept,
   onHostReject,
   config,
+  onUpdateAccountProfile,
 }) => {
   const currentUnit = units.find(u => u.id === currentHostUnitId) || units[0];
 
   const [activeTab, setActiveTab] = useState<'queue' | 'settings' | 'history'>('queue');
   const [rejectReasonModalOpen, setRejectReasonModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRejectReason, setSelectedRejectReason] = useState('Perfil do hóspede incompatível com as regras');
   const [customRejectReason, setCustomRejectReason] = useState('');
 
@@ -301,6 +307,13 @@ export const HostPortal: React.FC<HostPortalProps> = ({
     };
 
     onUpdateUnit(updatedUnit);
+    if (onUpdateAccountProfile) {
+      onUpdateAccountProfile({
+        name: updatedUnit.ownerName,
+        phone: updatedUnit.whatsapp,
+        email: updatedUnit.ownerEmail,
+      });
+    }
     setSaveSuccessMsg(`Dados do responsável e da unidade Apto ${updatedUnit.unitNumber} (${updatedUnit.floor}º Andar) atualizados com sucesso!`);
     playChime('accepted');
 
@@ -550,12 +563,30 @@ export const HostPortal: React.FC<HostPortalProps> = ({
                       </a>
                     )}
                   </div>
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white rounded-lg text-xs font-bold border border-amber-500/40 flex items-center gap-1 transition-all shadow-sm"
+                    title="Editar dados cadastrais, alterar WhatsApp e valores da unidade"
+                  >
+                    <Edit3 className="w-3 h-3 text-amber-400" />
+                    <span>Editar Meu WhatsApp & Cadastro</span>
+                  </button>
                 </>
               ) : (
-                <div className="flex items-center gap-1.5 text-slate-400 italic">
-                  <User className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Sem anfitrião credenciado para esta unidade.</span>
-                </div>
+                <>
+                  <div className="flex items-center gap-1.5 text-slate-400 italic">
+                    <User className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Sem anfitrião credenciado para esta unidade.</span>
+                  </div>
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white rounded-lg text-xs font-bold border border-amber-500/40 flex items-center gap-1 transition-all shadow-sm"
+                    title="Cadastrar responsável e WhatsApp para esta unidade"
+                  >
+                    <Edit3 className="w-3 h-3 text-amber-400" />
+                    <span>Cadastrar Meu WhatsApp Nesta Unidade</span>
+                  </button>
+                </>
               )}
               <span>•</span>
               <span className="text-amber-400 font-medium">🛏️ {currentUnit?.bedSummary || `${currentUnit?.bedsCount || 1} Cama`}</span>
@@ -672,6 +703,154 @@ export const HostPortal: React.FC<HostPortalProps> = ({
               <span>Testar Som do Chamado</span>
             </button>
           )}
+        </div>
+      </div>
+
+      {/* 📬 COMO SEREI NOTIFICADO? PAINEL EXPLICATIVO MULTICANAL (WHATSAPP, EMAIL, SMS, PUSH) 📬 */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">
+                Central de Comunicação Autônoma
+              </span>
+              <span className="text-xs text-slate-400">Crystal Place Residence</span>
+            </div>
+            <h3 className="text-lg font-black text-white mt-1 flex items-center gap-2">
+              <span>Como serei notificado quando a portaria alocar um hóspede?</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              O sistema dispara <strong>4 canais simultâneos</strong> para garantir que você nunca perca sua vez de faturamento no rodízio de balcão:
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white rounded-xl text-xs font-bold border border-amber-500/30 transition-all flex items-center gap-2 self-start sm:self-center"
+          >
+            <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+            <span>Editar Meu WhatsApp / Dados</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* 1. WhatsApp */}
+          <div className="p-4 bg-slate-950 rounded-2xl border border-emerald-500/20 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+                  <MessageSquare className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Principal
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-white mt-2">1. WhatsApp Oficial</h4>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Mensagem imediata com nome do hóspede, noites, rendimento em R$ e link de resposta direta.
+              </p>
+              <div className="mt-2 text-[11px] font-mono text-emerald-400 truncate">
+                {currentUnit?.whatsapp || currentUnit?.ownerPhone}
+              </div>
+            </div>
+            {currentWhatsAppUrl && (
+              <a
+                href={currentWhatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-1.5 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold rounded-lg border border-emerald-500/30 flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <span>Testar Mensagem</span>
+                <ExternalLink className="w-3 h-3 text-emerald-400" />
+              </a>
+            )}
+          </div>
+
+          {/* 2. E-mail */}
+          <div className="p-4 bg-slate-950 rounded-2xl border border-blue-500/20 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold">
+                  <Mail className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  Comprovante
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-white mt-2">2. E-mail com Espelho</h4>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Notificação formal com resumo cadastral, voucher e termos de check-in para prestação de contas.
+              </p>
+              <div className="mt-2 text-[11px] font-mono text-blue-400 truncate">
+                {currentUnit?.ownerEmail || 'wellington.1609@crystalplace.com'}
+              </div>
+            </div>
+            <a
+              href={`mailto:${currentUnit?.ownerEmail || 'wellington.1609@crystalplace.com'}?subject=Teste%20Canal%20Portaria%20Crystal%20Place&body=Teste%20de%20notificacao%20de%20email`}
+              className="py-1.5 px-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 text-xs font-semibold rounded-lg border border-blue-500/30 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <span>Testar E-mail</span>
+              <ExternalLink className="w-3 h-3 text-blue-400" />
+            </a>
+          </div>
+
+          {/* 3. SMS */}
+          <div className="p-4 bg-slate-950 rounded-2xl border border-purple-500/20 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">
+                  <Smartphone className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  Contingência
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-white mt-2">3. SMS no Celular</h4>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Mensagem de texto direta no celular para locais sem cobertura de internet 4G/Wi-Fi ativa.
+              </p>
+              <div className="mt-2 text-[11px] font-mono text-purple-400 truncate">
+                {currentUnit?.whatsapp || currentUnit?.ownerPhone}
+              </div>
+            </div>
+            <a
+              href={`sms:${currentUnit?.whatsapp || currentUnit?.ownerPhone}?body=Crystal%20Place%3A%20Teste%20de%20alerta%20de%20chamada%20de%20balcao.`}
+              className="py-1.5 px-3 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold rounded-lg border border-purple-500/30 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <span>Testar SMS</span>
+              <ExternalLink className="w-3 h-3 text-purple-400" />
+            </a>
+          </div>
+
+          {/* 4. Push Web & Alarme Sonoro */}
+          <div className="p-4 bg-slate-950 rounded-2xl border border-amber-500/20 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                  <Bell className="w-4 h-4" />
+                </span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  5 Minutos
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-white mt-2">4. Alarme no Aparelho</h4>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Toque de chamada e notificação no computador/celular durante a contagem regressiva de 5 minutos.
+              </p>
+              <div className="mt-2 text-[11px] text-amber-400">
+                {notifPermission === 'granted' ? '✅ Push Permitido' : '⚠️ Clique para Permitir'}
+              </div>
+            </div>
+            <button
+              onClick={handleTestDeviceNotification}
+              className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-lg border border-amber-500/30 flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Bell className="w-3 h-3 text-amber-400" />
+              <span>Ouvir Alarme</span>
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -1758,6 +1937,15 @@ export const HostPortal: React.FC<HostPortalProps> = ({
           </div>
         </div>
       )}
+
+      {/* ✏️ MODAL DE EDIÇÃO DE CADASTRO & WHATSAPP DA UNIDADE ✏️ */}
+      <EditUnitModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        unit={currentUnit}
+        onSaveUnit={onUpdateUnit}
+        onUpdateAccountProfile={onUpdateAccountProfile}
+      />
 
     </div>
   );

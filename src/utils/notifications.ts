@@ -1,7 +1,15 @@
 /**
- * Real-Time Notification & Device Alert Service
- * Handles browser Web Notifications, Web Audio chimes, and mobile device vibration.
+ * Real-Time Notification & Multi-Channel Device Alert Service
+ * Handles browser Web Notifications, Web Audio chimes, mobile vibration,
+ * and multi-channel notification dispatch (WhatsApp, E-mail, SMS, Push).
  */
+
+import {
+  getWhatsAppDirectUrl,
+  getReservationHostNotificationMessage,
+  getEmailHostNotification,
+  getSmsHostNotification,
+} from './whatsapp';
 
 export interface DeviceNotificationPayload {
   title: string;
@@ -35,13 +43,164 @@ export function getDeviceNotificationPermission(): NotificationPermission {
 }
 
 /**
- * Real-Time Multi-Channel Notification Service
- * Handles:
- * 1. Email notification dispatch (via mailto / transactional trigger)
- * 2. WhatsApp notification dispatch (API / direct wa.me deep link)
- * 3. SMS notification dispatch (sms: deep link / telco webhook)
- * 4. Browser Native Web Notifications & Device Vibration
+ * Triggers an immediate native device notification + vibration
  */
+export function sendDeviceNotification(payload: DeviceNotificationPayload): Notification | null {
+  // Mobile vibration if supported
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      // Urgent pattern: beep-pause-beep-pause-long
+      navigator.vibrate([300, 150, 300, 150, 600]);
+    } catch {
+      // Ignore vibration error
+    }
+  }
+
+  if (!isNotificationSupported()) {
+    return null;
+  }
+
+  if (Notification.permission === 'granted') {
+    try {
+      const notif = new Notification(payload.title, {
+        body: payload.body,
+        icon: payload.icon || '/favicon.ico',
+        tag: payload.tag || 'rotativo-crystal-alert',
+        requireInteraction: payload.requireInteraction ?? true,
+      });
+
+      notif.onclick = () => {
+        window.focus();
+        notif.close();
+      };
+
+      return notif;
+    } catch (err) {
+      console.warn('Native notification failed:', err);
+      return null;
+    }
+  }
+
+  return null;
+}
+
+export interface GuestCallDispatchPayload {
+  voucherCode: string;
+  guestName: string;
+  guestDocument: string;
+  guestPhone: string;
+  guestsCount: number;
+  nightsCount: number;
+  checkInDate: string;
+  checkOutDate: string;
+  totalAmount: number;
+  unit: {
+    id: string;
+    unitNumber: string;
+    floor: number;
+    ownerName: string;
+    managerName?: string;
+    managementType?: 'anfitriao' | 'co_anfitriao';
+    ownerEmail: string;
+    ownerPhone: string;
+    whatsapp: string;
+  };
+}
+
+export interface MultiChannelCallDispatchResult {
+  timestamp: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientEmail: string;
+  unitNumber: string;
+  floor: number;
+  whatsapp: {
+    url: string;
+    messageText: string;
+  };
+  email: {
+    mailtoUrl: string;
+    subject: string;
+    body: string;
+  };
+  sms: {
+    smsUrl: string;
+    text: string;
+  };
+  pushDispatched: boolean;
+}
+
+/**
+ * Dispatches and generates multi-channel notifications for an incoming guest walk-in
+ */
+export function dispatchGuestCallNotifications(payload: GuestCallDispatchPayload): MultiChannelCallDispatchResult {
+  const { voucherCode, guestName, guestDocument, guestPhone, guestsCount, nightsCount, checkInDate, checkOutDate, totalAmount, unit } = payload;
+  const targetPhone = unit.whatsapp || unit.ownerPhone;
+  const targetEmail = unit.ownerEmail || 'anfitriao@crystalplace.com';
+  const targetName = unit.managerName || unit.ownerName || 'Anfitrião';
+
+  // 1. WhatsApp notification payload & URL
+  const waMessage = getReservationHostNotificationMessage({
+    voucherCode,
+    guestName,
+    guestDocument,
+    guestPhone,
+    unitNumber: unit.unitNumber,
+    floor: unit.floor,
+    hostName: targetName,
+    guestsCount,
+    nightsCount,
+    checkInDate,
+    checkOutDate,
+    totalAmount,
+  });
+  const whatsappUrl = getWhatsAppDirectUrl(targetPhone, waMessage);
+
+  // 2. Email notification
+  const emailData = getEmailHostNotification({
+    voucherCode,
+    guestName,
+    unitNumber: unit.unitNumber,
+    hostName: targetName,
+    hostEmail: targetEmail,
+    nightsCount,
+    totalAmount,
+  });
+
+  // 3. SMS notification
+  const smsData = getSmsHostNotification({
+    voucherCode,
+    guestName,
+    unitNumber: unit.unitNumber,
+    nightsCount,
+    totalAmount,
+    phone: targetPhone,
+  });
+
+  // 4. Device Native Push Web Notification
+  const pushNotification = sendDeviceNotification({
+    title: `🚨 Chamado de Balcão: Apto ${unit.unitNumber} (${unit.floor}º Andar)`,
+    body: `É a sua vez no rodízio! Hóspede ${guestName} (${guestsCount}p, ${nightsCount} noites). Responda em até 5 minutos no portal.`,
+    tag: `call-${voucherCode}`,
+    requireInteraction: true,
+  });
+
+  return {
+    timestamp: new Date().toISOString(),
+    recipientName: targetName,
+    recipientPhone: targetPhone,
+    recipientEmail: targetEmail,
+    unitNumber: unit.unitNumber,
+    floor: unit.floor,
+    whatsapp: {
+      url: whatsappUrl,
+      messageText: waMessage,
+    },
+    email: emailData,
+    sms: smsData,
+    pushDispatched: !!pushNotification || getDeviceNotificationPermission() === 'granted',
+  };
+}
 
 export interface MultiChannelDispatchResult {
   emailSent: boolean;
@@ -105,46 +264,4 @@ export function dispatchHostCredentialingNotifications(account: {
       unitNumber: account.unitNumber,
     },
   };
-}
-
-/**
- * Triggers an immediate native device notification + vibration
- */
-export function sendDeviceNotification(payload: DeviceNotificationPayload): Notification | null {
-  // Mobile vibration if supported
-  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-    try {
-      // Urgent pattern: beep-pause-beep-pause-long
-      navigator.vibrate([300, 150, 300, 150, 600]);
-    } catch {
-      // Ignore vibration error
-    }
-  }
-
-  if (!isNotificationSupported()) {
-    return null;
-  }
-
-  if (Notification.permission === 'granted') {
-    try {
-      const notif = new Notification(payload.title, {
-        body: payload.body,
-        icon: payload.icon || '/favicon.ico',
-        tag: payload.tag || 'rotativo-302-alert',
-        requireInteraction: payload.requireInteraction ?? true,
-      });
-
-      notif.onclick = () => {
-        window.focus();
-        notif.close();
-      };
-
-      return notif;
-    } catch (err) {
-      console.warn('Native notification failed:', err);
-      return null;
-    }
-  }
-
-  return null;
 }

@@ -13,7 +13,8 @@ import {
   Share2,
   ExternalLink,
   UserCheck,
-  FileText
+  FileText,
+  Edit3
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -30,6 +31,7 @@ interface HeaderProps {
   onOpenLogin: (role?: 'host' | 'reception' | 'admin') => void;
   onLogout: () => void;
   onOpenManual?: () => void;
+  onOpenEditCurrentUnit?: () => void;
   currentHostUnitNumber?: string;
   authenticatedUserName?: string;
 }
@@ -48,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenLogin,
   onLogout,
   onOpenManual,
+  onOpenEditCurrentUnit,
   currentHostUnitNumber,
   authenticatedUserName,
 }) => {
@@ -195,6 +198,19 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
                   <span className="hidden sm:inline">Painel do Síndico</span>
+                </button>
+              )}
+
+              {/* Quick Edit My Unit & WhatsApp Button */}
+              {onOpenEditCurrentUnit && (
+                <button
+                  onClick={onOpenEditCurrentUnit}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  title="Editar Meu WhatsApp e Cadastro"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Meu WhatsApp & Cadastro</span>
+                  <span className="sm:hidden">Cadastro</span>
                 </button>
               )}
 

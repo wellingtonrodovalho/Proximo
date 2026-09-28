@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, Radio, ArrowRight, ShieldCheck, Clock, CheckCircle2, Lock, LogOut, Share2 } from 'lucide-react';
+import { Bell, Radio, ArrowRight, ShieldCheck, Clock, CheckCircle2, Lock, LogOut, Share2, Edit3, MessageSquare } from 'lucide-react';
 import { Unit, GuestRequest, AuditLog, SystemConfig, UnitTypology } from './types';
 import { 
   loadUnits, 
@@ -24,7 +24,7 @@ import {
 import { callNextHostInQueue, rotateUnitToEnd, reindexQueue } from './utils/roundRobin';
 import { createAuditEntry } from './utils/audit';
 import { playChime } from './utils/audio';
-import { dispatchHostCredentialingNotifications } from './utils/notifications';
+import { dispatchHostCredentialingNotifications, dispatchGuestCallNotifications } from './utils/notifications';
 import { 
   UserRole, 
   AccessRole,
@@ -51,6 +51,8 @@ import { SimulateGuestModal } from './components/SimulateGuestModal';
 import { PortalLogin } from './components/PortalLogin';
 import { ShareLinksModal } from './components/ShareLinksModal';
 import { ManualModal } from './components/ManualModal';
+import { DispatchNotificationModal } from './components/DispatchNotificationModal';
+import { EditUnitModal } from './components/EditUnitModal';
 
 export default function App() {
   // Global State
@@ -97,6 +99,15 @@ export default function App() {
   const [isQrPlaqueOpen, setIsQrPlaqueOpen] = useState<boolean>(false);
   const [isSimulateModalOpen, setIsSimulateModalOpen] = useState<boolean>(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState<boolean>(false);
+
+  // Multi-channel dispatch popup state
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState<boolean>(false);
+  const [dispatchedCallRequest, setDispatchedCallRequest] = useState<GuestRequest | null>(null);
+  const [dispatchedCallUnit, setDispatchedCallUnit] = useState<Unit | null>(null);
+
+  // Quick unit edit modal state
+  const [isEditUnitModalOpen, setIsEditUnitModalOpen] = useState<boolean>(false);
+  const [unitToEdit, setUnitToEdit] = useState<Unit | null>(null);
 
   // Active in-progress request for the Totem and Host alert
   const activeRequest = requests.find(r => r.status === 'waiting_host' || r.status === 'accepted' || r.status === 'rejected') || null;
@@ -350,6 +361,34 @@ export default function App() {
       // Auto switch host portal to this unit so the reviewer/user can inspect or respond easily
       setCurrentHostUnitId(calledUnit.id);
       triggerAudio('incoming_call');
+
+      // Dispatch real multi-channel notification and open confirmation popup
+      dispatchGuestCallNotifications({
+        voucherCode: updatedRequest.voucherCode,
+        guestName: updatedRequest.guestName,
+        guestDocument: updatedRequest.guestDocument,
+        guestPhone: updatedRequest.guestPhone,
+        guestsCount: updatedRequest.guestsCount,
+        nightsCount: updatedRequest.nightsCount,
+        checkInDate: updatedRequest.checkInDate,
+        checkOutDate: updatedRequest.checkOutDate,
+        totalAmount: updatedRequest.totalAmount,
+        unit: {
+          id: calledUnit.id,
+          unitNumber: calledUnit.unitNumber,
+          floor: calledUnit.floor,
+          ownerName: calledUnit.ownerName,
+          managerName: calledUnit.managerName,
+          managementType: calledUnit.managementType,
+          ownerEmail: calledUnit.ownerEmail,
+          ownerPhone: calledUnit.ownerPhone,
+          whatsapp: calledUnit.whatsapp || calledUnit.ownerPhone,
+        }
+      });
+
+      setDispatchedCallRequest(updatedRequest);
+      setDispatchedCallUnit(calledUnit);
+      setIsDispatchModalOpen(true);
     }
   }, [units, auditLogs, config, triggerAudio]);
 
@@ -644,6 +683,34 @@ export default function App() {
       return reindexQueue(updated);
     });
 
+    // Also sync the contact updates into accessAccounts and current session
+    setAccessAccounts(prev => prev.map(acc => {
+      if (
+        acc.unitNumber === updatedUnit.unitNumber ||
+        (acc.managedUnits && acc.managedUnits.includes(updatedUnit.unitNumber)) ||
+        (session && acc.id === session.accountId)
+      ) {
+        return {
+          ...acc,
+          phone: updatedUnit.whatsapp || updatedUnit.ownerPhone,
+          name: updatedUnit.ownerName || acc.name,
+          email: updatedUnit.ownerEmail || acc.email,
+        };
+      }
+      return acc;
+    }));
+
+    if (session) {
+      const updatedSession: AuthSession = {
+        ...session,
+        userName: updatedUnit.ownerName || session.userName,
+        userPhone: updatedUnit.whatsapp || updatedUnit.ownerPhone || session.userPhone,
+        userEmail: updatedUnit.ownerEmail || session.userEmail,
+      };
+      setSession(updatedSession);
+      saveSession(updatedSession);
+    }
+
     const log = createAuditEntry(
       'HOST_CONTACT_UPDATED',
       'Anfitrião',
@@ -652,7 +719,54 @@ export default function App() {
       auditLogs
     );
     setAuditLogs(prev => [log, ...prev]);
-  }, [auditLogs]);
+  }, [auditLogs, session]);
+
+  // Sync profile edits across accounts and units
+  const handleUpdateAccountProfile = useCallback((profile: { name: string; phone: string; email: string }) => {
+    setAccessAccounts(prev => prev.map(acc => {
+      if (session && acc.id === session.accountId) {
+        return {
+          ...acc,
+          name: profile.name,
+          phone: profile.phone,
+          email: profile.email,
+        };
+      }
+      if (acc.name && acc.name.includes('Wellington')) {
+        return {
+          ...acc,
+          phone: profile.phone,
+          email: profile.email,
+        };
+      }
+      return acc;
+    }));
+
+    if (session) {
+      const updatedSession: AuthSession = {
+        ...session,
+        userName: profile.name,
+        userPhone: profile.phone,
+        userEmail: profile.email,
+      };
+      setSession(updatedSession);
+      saveSession(updatedSession);
+    }
+
+    // Also update current unit and Wellington units
+    setUnits(prev => prev.map(u => {
+      if (u.id === currentHostUnitId || (u.ownerName && u.ownerName.includes('Wellington'))) {
+        return {
+          ...u,
+          ownerName: profile.name,
+          whatsapp: profile.phone,
+          ownerPhone: profile.phone,
+          ownerEmail: profile.email,
+        };
+      }
+      return u;
+    }));
+  }, [session, currentHostUnitId]);
 
   // 8b. REGISTER NEW HOST UNIT & WHATSAPP CONTACT
   const handleRegisterUnit = useCallback((newUnitData: Unit) => {
@@ -760,6 +874,10 @@ export default function App() {
         onOpenLogin={(role) => handleOpenLogin(role || 'host')}
         onLogout={handleLogout}
         onOpenManual={() => setIsManualModalOpen(true)}
+        onOpenEditCurrentUnit={() => {
+          setUnitToEdit(currentUnit || units[0]);
+          setIsEditUnitModalOpen(true);
+        }}
         currentHostUnitNumber={currentUnit?.unitNumber}
         authenticatedUserName={session?.userName}
       />
@@ -767,7 +885,7 @@ export default function App() {
       {/* Active Assignment Live Notification Bar */}
       {activeRequest && activeRequest.status === 'waiting_host' && (
         <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-slate-950 px-4 py-2.5 font-medium shadow-lg animate-pulse-subtle border-b border-amber-400">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs sm:text-sm">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
@@ -775,13 +893,41 @@ export default function App() {
               </span>
               <Bell className="w-4 h-4 text-slate-950 animate-bounce" />
               <span>
-                <strong>Notificação em Tempo Real no Dispositivo:</strong> Hóspede <strong>{activeRequest.guestName}</strong> atribuído ao <strong>Apto {activeRequest.assignedUnitNumber}</strong> ({activeRequest.assignedHostName}). 
+                <strong>Notificação Multicanal no Dispositivo:</strong> Hóspede <strong>{activeRequest.guestName}</strong> atribuído ao <strong>Apto {activeRequest.assignedUnitNumber}</strong> ({activeRequest.assignedHostName}). 
                 {activeRequest.estimatedWaitMinutes && (
-                  <span className="ml-1 opacity-90">Tempo estimado de espera: ~{activeRequest.estimatedWaitMinutes} min.</span>
+                  <span className="ml-1 opacity-90">Tempo regulamentar: ~{activeRequest.estimatedWaitMinutes} min.</span>
                 )}
               </span>
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => {
+                  const calledUnit = units.find(u => u.id === activeRequest.assignedUnitId) || null;
+                  setDispatchedCallRequest(activeRequest);
+                  setDispatchedCallUnit(calledUnit);
+                  setIsDispatchModalOpen(true);
+                }}
+                className="bg-emerald-800 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow transition-all"
+                title="Ver notificações geradas para WhatsApp, E-mail e SMS"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
+                <span>Ver Notificação do Anfitrião</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const calledUnit = units.find(u => u.id === activeRequest.assignedUnitId) || currentUnit || units[0];
+                  setUnitToEdit(calledUnit);
+                  setIsEditUnitModalOpen(true);
+                }}
+                className="bg-slate-900/90 hover:bg-slate-900 text-amber-300 px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow transition-all border border-amber-400/40"
+                title="Corrigir WhatsApp e dados da unidade"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                <span>Corrigir WhatsApp</span>
+              </button>
+
               <button
                 onClick={() => {
                   if (activeRequest.assignedUnitId) {
@@ -789,9 +935,9 @@ export default function App() {
                   }
                   setActiveTab('host');
                 }}
-                className="bg-slate-950 text-amber-300 hover:text-white px-3 py-1 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow transition-all hover:scale-105"
+                className="bg-slate-950 text-amber-300 hover:text-white px-3.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 shadow transition-all hover:scale-105"
               >
-                <span>Responder no Painel do Anfitrião</span>
+                <span>Responder no Painel</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -821,6 +967,12 @@ export default function App() {
               }
             }}
             onEnsureActiveUnits={handleEnsureActiveUnits}
+            onOpenDispatchModal={() => {
+              const calledUnit = units.find(u => u.id === activeRequest?.assignedUnitId) || null;
+              setDispatchedCallRequest(activeRequest);
+              setDispatchedCallUnit(calledUnit);
+              setIsDispatchModalOpen(true);
+            }}
             config={config}
           />
         )}
@@ -836,6 +988,7 @@ export default function App() {
             onRegisterUnit={handleRegisterUnit}
             onHostAccept={handleHostAccept}
             onHostReject={handleHostReject}
+            onUpdateAccountProfile={handleUpdateAccountProfile}
             config={config}
           />
         )}
@@ -865,6 +1018,10 @@ export default function App() {
             onApproveAccount={handleApproveAccount}
             onRejectAccount={handleRejectAccount}
             onOpenManual={() => setIsManualModalOpen(true)}
+            onEditUnit={(u) => {
+              setUnitToEdit(u);
+              setIsEditUnitModalOpen(true);
+            }}
           />
         )}
       </main>
@@ -922,6 +1079,31 @@ export default function App() {
         isOpen={isManualModalOpen}
         onClose={() => setIsManualModalOpen(false)}
         condoName={config.complexName}
+      />
+
+      {/* Multi-Channel Notification Dispatch Popup */}
+      <DispatchNotificationModal
+        isOpen={isDispatchModalOpen}
+        onClose={() => setIsDispatchModalOpen(false)}
+        request={dispatchedCallRequest}
+        unit={dispatchedCallUnit}
+        onOpenHostPortal={(unitId) => {
+          setCurrentHostUnitId(unitId);
+          setActiveTab('host');
+        }}
+        onOpenEditUnit={(u) => {
+          setUnitToEdit(u);
+          setIsEditUnitModalOpen(true);
+        }}
+      />
+
+      {/* Quick Unit & Host Cadastros Edit Modal */}
+      <EditUnitModal
+        isOpen={isEditUnitModalOpen}
+        onClose={() => setIsEditUnitModalOpen(false)}
+        unit={unitToEdit || currentUnit || units[0]}
+        onSaveUnit={handleUpdateUnit}
+        onUpdateAccountProfile={handleUpdateAccountProfile}
       />
 
     </div>

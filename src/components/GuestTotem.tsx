@@ -22,7 +22,8 @@ import {
   Check,
   Bell,
   Smartphone,
-  Ticket
+  Ticket,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Unit, GuestRequest, SystemConfig, UnitTypology } from '../types';
@@ -47,6 +48,7 @@ interface GuestTotemProps {
   onSimulateAccept: (requestId: string) => void;
   onSimulateReject: (requestId: string) => void;
   onEnsureActiveUnits?: () => void;
+  onOpenDispatchModal?: () => void;
   config: SystemConfig;
 }
 
@@ -88,6 +90,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
   onSimulateAccept,
   onSimulateReject,
   onEnsureActiveUnits,
+  onOpenDispatchModal,
   config,
 }) => {
   // Form State
@@ -418,13 +421,25 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               <span className="text-[10px] text-slate-500">Resposta da unidade da vez</span>
             </div>
 
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center">
-              <span className="text-[11px] text-slate-400 block font-medium">Notificação Enviada</span>
-              <div className="text-base font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
-                <Smartphone className="w-4 h-4" />
-                <span>No Aparelho do Anfitrião</span>
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center flex flex-col justify-between">
+              <div>
+                <span className="text-[11px] text-slate-400 block font-medium">Notificação Multicanal</span>
+                <div className="text-xs sm:text-sm font-bold text-emerald-400 mt-1 flex items-center justify-center gap-1.5">
+                  <Smartphone className="w-4 h-4" />
+                  <span>WhatsApp • E-mail • SMS</span>
+                </div>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Alerta e toque sonoro</span>
               </div>
-              <span className="text-[10px] text-slate-500">Alerta sonoro imediato</span>
+              {onOpenDispatchModal && (
+                <button
+                  type="button"
+                  onClick={onOpenDispatchModal}
+                  className="mt-2 text-[11px] font-bold text-amber-400 hover:text-amber-300 hover:underline flex items-center justify-center gap-1 transition-colors"
+                >
+                  <span>Ver Detalhes do Disparo</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center">

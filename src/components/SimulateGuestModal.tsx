@@ -98,11 +98,14 @@ export const SimulateGuestModal: React.FC<SimulateGuestModalProps> = ({
           ))}
         </div>
 
-        <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-          <span>
-            O sistema autônomo selecionará instantaneamente a unidade no topo da fila de espera!
-          </span>
+        <div className="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/20 text-xs text-slate-300 space-y-1">
+          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+            <span>Notificação Multicanal Imediata do Anfitrião</span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Ao disparar, o sistema acionará a unidade da vez e gerará o chamado para <strong>WhatsApp</strong>, <strong>E-mail</strong>, <strong>SMS</strong> e <strong>Alarme no Dispositivo</strong> com contagem regressiva de 5 minutos.
+          </p>
         </div>
 
         <div className="flex gap-3">

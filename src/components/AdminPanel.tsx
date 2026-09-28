@@ -44,6 +44,7 @@ interface AdminPanelProps {
   onApproveAccount?: (accountId: string) => void;
   onRejectAccount?: (accountId: string) => void;
   onOpenManual?: () => void;
+  onEditUnit?: (unit: Unit) => void;
 }
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({
@@ -58,6 +59,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onApproveAccount,
   onRejectAccount,
   onOpenManual,
+  onEditUnit,
 }) => {
   const [activeTab, setActiveTab] = useState<'units' | 'queue' | 'accounts' | 'audit' | 'metrics' | 'settings'>('units');
   const [searchUnit, setSearchUnit] = useState('');
@@ -467,8 +469,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <span className="font-semibold text-white">{unit.totalBookingsCompleted}</span>
                       </td>
 
-                      {/* Admin Toggle */}
-                      <td className="py-3 px-4 text-right">
+                      {/* Admin Toggle & Edit */}
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        {onEditUnit && (
+                          <button
+                            onClick={() => onEditUnit(unit)}
+                            className="mr-1.5 px-2 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-lg text-[11px] font-semibold border border-amber-500/30 transition-colors"
+                            title="Editar cadastro da unidade e WhatsApp"
+                          >
+                            Editar
+                          </button>
+                        )}
                         {unit.isEligibleByAdmin ? (
                           <button
                             onClick={() => setDeactivatingUnit(unit)}
