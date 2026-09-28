@@ -94,6 +94,7 @@ export interface GuestCallDispatchPayload {
   checkInDate: string;
   checkOutDate: string;
   totalAmount: number;
+  guestNotes?: string;
   unit: {
     id: string;
     unitNumber: string;
@@ -134,7 +135,7 @@ export interface MultiChannelCallDispatchResult {
  * Dispatches and generates multi-channel notifications for an incoming guest walk-in
  */
 export function dispatchGuestCallNotifications(payload: GuestCallDispatchPayload): MultiChannelCallDispatchResult {
-  const { voucherCode, guestName, guestDocument, guestPhone, guestsCount, nightsCount, checkInDate, checkOutDate, totalAmount, unit } = payload;
+  const { voucherCode, guestName, guestDocument, guestPhone, guestsCount, nightsCount, checkInDate, checkOutDate, totalAmount, guestNotes, unit } = payload;
   const targetPhone = unit.whatsapp || unit.ownerPhone;
   const targetEmail = unit.ownerEmail || 'anfitriao@crystalplace.com';
   const targetName = unit.managerName || unit.ownerName || 'Anfitrião';
@@ -153,6 +154,7 @@ export function dispatchGuestCallNotifications(payload: GuestCallDispatchPayload
     checkInDate,
     checkOutDate,
     totalAmount,
+    guestNotes,
   });
   const whatsappUrl = getWhatsAppDirectUrl(targetPhone, waMessage);
 
@@ -165,6 +167,7 @@ export function dispatchGuestCallNotifications(payload: GuestCallDispatchPayload
     hostEmail: targetEmail,
     nightsCount,
     totalAmount,
+    guestNotes,
   });
 
   // 3. SMS notification
@@ -175,6 +178,7 @@ export function dispatchGuestCallNotifications(payload: GuestCallDispatchPayload
     nightsCount,
     totalAmount,
     phone: targetPhone,
+    guestNotes,
   });
 
   // 4. Device Native Push Web Notification

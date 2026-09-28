@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Lock, 
   UserCheck, 
@@ -27,6 +27,7 @@ interface PortalLoginProps {
   onRequestAccess: (account: Omit<AccessAccount, 'id' | 'status' | 'requestedAt'>) => void;
   onLoginSuccess: (session: AuthSession) => void;
   initialRole?: AccessRole;
+  initialMode?: 'request' | 'login';
 }
 
 export const PortalLogin: React.FC<PortalLoginProps> = ({
@@ -37,8 +38,9 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
   onRequestAccess,
   onLoginSuccess,
   initialRole = 'host',
+  initialMode = 'login',
 }) => {
-  const [mode, setMode] = useState<'request' | 'login'>('request');
+  const [mode, setMode] = useState<'request' | 'login'>(initialMode);
   
   // Registration Form
   const [name, setName] = useState('');
@@ -54,6 +56,14 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
   // Feedback
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode || 'login');
+      setErrorMsg(null);
+      setSuccessMsg(null);
+    }
+  }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
 
@@ -163,30 +173,6 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
     saveSession(session);
     onLoginSuccess(session);
   };
-
-  const handleQuickLogin = (account: AccessAccount) => {
-    let unitId: string | undefined;
-    if (account.unitNumber) {
-      const match = units.find(u => u.unitNumber === account.unitNumber);
-      unitId = match?.id;
-    }
-
-    const session: AuthSession = {
-      role: account.role,
-      accountId: account.id,
-      unitId,
-      unitNumber: account.unitNumber,
-      userName: account.name,
-      userEmail: account.email,
-      userPhone: account.phone,
-      authenticatedAt: new Date().toISOString(),
-    };
-
-    saveSession(session);
-    onLoginSuccess(session);
-  };
-
-  const approvedAccounts = accounts.filter(a => a.status === 'approved');
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
@@ -411,13 +397,13 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
                   required={role === 'host'}
                   value={unitNumber}
                   onChange={(e) => setUnitNumber(e.target.value)}
-                  placeholder={role === 'admin' ? "Ex: 1609 (opcional se for também anfitrião)" : "Ex: 1609, 1701, 103..."}
+                  placeholder={role === 'admin' ? "Ex: 1609 (opcional se for também anfitrião)" : "Ex: 200, 201, 1609, 1701, 2512..."}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 font-mono focus:outline-none focus:border-amber-500"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
                   {role === 'admin' 
                     ? 'Como Administrador, se você possui ou administra unidades no condomínio (ex: 1609, 1701), informe para participar também como anfitrião.' 
-                    : 'Crystal Place tem 25 andares com 13 unidades por andar (unidades final 3 têm 35m² e demais têm 33m²).'}
+                    : 'Crystal Place tem 312 unidades habitacionais do 2º ao 25º andar (13 un./andar, iniciando em 200, 201, 202... até 2512). Unidades final 3 têm 35m² e demais têm 33m².'}
                 </span>
               </div>
             )}
@@ -440,68 +426,48 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
         {/* MODE 2: DIRECT LOGIN WITH APPROVED ACCOUNT */}
         {mode === 'login' && (
           <div className="space-y-4">
-            <form onSubmit={handleDirectLogin} className="space-y-3">
+            <form onSubmit={handleDirectLogin} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Seu E-mail ou Telefone Cadastrado
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Seu E-mail ou Telefone Cadastrado</span>
                 </label>
                 <input
                   type="text"
                   required
+                  autoFocus
+                  autoComplete="off"
                   value={searchCredential}
                   onChange={(e) => setSearchCredential(e.target.value)}
                   placeholder="Digite seu e-mail ou telefone..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 font-medium"
                 />
+                <span className="text-[11px] text-slate-500 mt-1.5 block">
+                  Informe o e-mail ou número de telefone/WhatsApp cadastrado na administração.
+                </span>
+              </div>
+
+              {/* Explicit Privacy Guarantee: No accounts shown publicly */}
+              <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 flex items-start gap-2.5 text-xs text-slate-400">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="text-slate-300 font-bold block text-[11px]">
+                    Validação Privada & Sigilosa
+                  </span>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Nenhuma lista de contas ou anfitriões é exibida nesta tela. O acesso é liberado exclusivamente após a validação do seu e-mail ou telefone previamente aprovado pelo administrador.
+                  </p>
+                </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
               >
                 <UserCheck className="w-4 h-4" />
                 <span>Entrar no Sistema</span>
               </button>
             </form>
-
-            {/* Quick Demo Access Badges */}
-            <div className="pt-3 border-t border-slate-800 space-y-2">
-              <div className="text-xs font-semibold text-slate-400 flex items-center justify-between">
-                <span>Contas Validadas / Aprovadas:</span>
-                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-mono">
-                  {approvedAccounts.length} ativas
-                </span>
-              </div>
-
-              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                {approvedAccounts.map((acc) => (
-                  <button
-                    key={acc.id}
-                    onClick={() => handleQuickLogin(acc)}
-                    className="w-full p-2.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left transition-all flex items-center justify-between group"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold text-white group-hover:text-amber-300 flex items-center gap-1.5 truncate">
-                        <span>{acc.name}</span>
-                        {acc.unitNumber && (
-                          <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 rounded">
-                            Apto {acc.unitNumber}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        {acc.role === 'admin' ? 'Administrador / Síndico' : acc.role === 'reception' ? 'Portaria 24h' : acc.managementType === 'co_anfitriao' ? 'Co-Anfitrião (Administrador)' : 'Anfitrião (Proprietário)'} • {acc.email}
-                      </div>
-                    </div>
-
-                    <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1 flex-shrink-0 group-hover:translate-x-0.5 transition-transform">
-                      <span>Acessar</span>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 

@@ -91,6 +91,7 @@ export function getReservationHostNotificationMessage(params: {
   checkInDate: string;
   checkOutDate: string;
   totalAmount: number;
+  guestNotes?: string;
   portalUrl?: string;
 }): string {
   const {
@@ -106,10 +107,13 @@ export function getReservationHostNotificationMessage(params: {
     checkInDate,
     checkOutDate,
     totalAmount,
+    guestNotes,
     portalUrl,
   } = params;
 
   const url = portalUrl || (typeof window !== 'undefined' ? `${window.location.origin}/?role=host` : 'https://proximo-access.app');
+
+  const notesSection = guestNotes ? `• Observações do Hóspede: *"${guestNotes}"*\n` : '';
 
   return `🚨 *CHAMADO DA PORTARIA - CRYSTAL PLACE RESIDENCE* 🚨\n\n` +
     `Olá, *${hostName}*!\n` +
@@ -120,8 +124,9 @@ export function getReservationHostNotificationMessage(params: {
     `• Telefone: ${guestPhone}\n` +
     `• Ocupantes: *${guestsCount} pessoa(s)*\n` +
     `• Estadia: *${nightsCount} diária(s)* (${checkInDate} até ${checkOutDate})\n` +
-    `• Rendimento Estimado: *R$ ${totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\n` +
-    `⏱️ *Prazo Regulamentar:* Você tem *5 minutos* para aceitar no painel antes de rotacionar para o próximo anfitrião.\n\n` +
+    `• Rendimento Estimado: *R$ ${totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n` +
+    notesSection +
+    `\n⏱️ *Prazo Regulamentar:* Você tem *5 minutos* para aceitar no painel antes de rotacionar para o próximo anfitrião.\n\n` +
     `👉 *Acesse o Portal do Anfitrião para Responder:* \n${url}`;
 }
 
@@ -133,16 +138,20 @@ export function getEmailHostNotification(params: {
   hostEmail: string;
   nightsCount: number;
   totalAmount: number;
+  guestNotes?: string;
   portalUrl?: string;
 }): { subject: string; body: string; mailtoUrl: string } {
   const subject = `[CHAMADO PORTARIA] Novo Hóspede para o Apto ${params.unitNumber} - Voucher ${params.voucherCode}`;
+  const notesText = params.guestNotes ? `• Observações do Solicitante: "${params.guestNotes}"\n` : '';
+
   const body = `Prezado(a) ${params.hostName},\n\n` +
     `Informamos que há um hóspede de balcão aguardando confirmação para o seu apartamento (Apto ${params.unitNumber} - Crystal Place Residence).\n\n` +
     `• Voucher: ${params.voucherCode}\n` +
     `• Hóspede: ${params.guestName}\n` +
     `• Diárias: ${params.nightsCount} noite(s)\n` +
-    `• Valor Total Previsto: R$ ${params.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
-    `Por favor, acesse o Portal do Anfitrião em até 5 minutos para aceitar ou recusar a reserva.\n\n` +
+    `• Valor Total Previsto: R$ ${params.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+    notesText +
+    `\nPor favor, acesse o Portal do Anfitrião em até 5 minutos para aceitar ou recusar a reserva.\n\n` +
     `Portal do Anfitrião: ${params.portalUrl || 'https://proximo-access.app'}\n\n` +
     `Atenciosamente,\nPortaria 24h & Sistema PROXIMO`;
 
@@ -157,8 +166,10 @@ export function getSmsHostNotification(params: {
   nightsCount: number;
   totalAmount: number;
   phone: string;
+  guestNotes?: string;
 }): { text: string; smsUrl: string } {
-  const text = `Crystal Place: Chamado de balcao para o Apto ${params.unitNumber}! Hospede ${params.guestName} (${params.nightsCount} noites, R$ ${params.totalAmount.toFixed(0)}). Acesse o portal em ate 5min para aceitar. Voucher ${params.voucherCode}`;
+  const notesPart = params.guestNotes ? ` Obs: ${params.guestNotes.slice(0, 30)}` : '';
+  const text = `Crystal Place: Chamado de balcao para o Apto ${params.unitNumber}! Hospede ${params.guestName} (${params.nightsCount} noites, R$ ${params.totalAmount.toFixed(0)}).${notesPart} Acesse o portal em ate 5min para aceitar. Voucher ${params.voucherCode}`;
   const smsUrl = `sms:${cleanPhoneDigits(params.phone)}?body=${encodeURIComponent(text)}`;
   return { text, smsUrl };
 }

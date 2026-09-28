@@ -15,6 +15,7 @@ interface SimulateGuestModalProps {
     checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
+    guestNotes?: string;
   }) => void;
 }
 
@@ -49,6 +50,7 @@ export const SimulateGuestModal: React.FC<SimulateGuestModalProps> = ({
       checkOutDate: checkOut,
       typologyPreferred: current.type,
       petFriendly: false,
+      guestNotes: current.note,
     });
     onClose();
   };

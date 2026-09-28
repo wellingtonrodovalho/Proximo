@@ -67,7 +67,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [filterFloor, setFilterFloor] = useState<string>('all');
   const [filterManagement, setFilterManagement] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active_queue' | 'inactive_host' | 'blocked_admin'>('all');
-  const [filterAccountStatus, setFilterAccountStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [filterAccountStatus, setFilterAccountStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
 
   // Deactivation modal state
   const [deactivatingUnit, setDeactivatingUnit] = useState<Unit | null>(null);
@@ -173,12 +173,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           )}
         </div>
 
-        {/* Global Stats Grid - 25 Andares (sem expor contagem de unidades) */}
+        {/* Global Stats Grid - 312 Unidades (2º ao 25º Andar) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
           <div className="text-center px-2">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Estrutura</span>
-            <span className="text-lg font-black text-white">25 Andares</span>
-            <span className="text-[10px] text-amber-400 block font-medium">13 un. por andar</span>
+            <span className="text-lg font-black text-white">312 Unidades</span>
+            <span className="text-[10px] text-amber-400 block font-medium">2º ao 25º Andar (13/andar)</span>
           </div>
           <div className="text-center px-2 border-l border-slate-800">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Fila Hoje</span>
@@ -315,14 +315,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <option value="blocked_admin">Bloqueados pelo Síndico</option>
               </select>
 
-              {/* Floor Filter (25 Andares) */}
+              {/* Floor Filter (24 Andares: 2º ao 25º) */}
               <select
                 value={filterFloor}
                 onChange={(e) => setFilterFloor(e.target.value)}
                 className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500"
               >
-                <option value="all">Todos os 25 Andares</option>
-                {Array.from({ length: 25 }, (_, i) => i + 1).map(f => (
+                <option value="all">Todos os Andares (2º ao 25º)</option>
+                {Array.from({ length: 24 }, (_, i) => i + 2).map(f => (
                   <option key={f} value={String(f)}>
                     {f}º Andar {f === 16 ? '(Apto 1609 - Wellington)' : f === 17 ? '(Apto 1701 - Wellington)' : ''}
                   </option>
@@ -551,7 +551,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   Apartamento {unit.unitNumber}
                 </div>
                 <div className="text-xs text-slate-400 mb-3">
-                  1 Quarto • 🛏️ {unit.bedSummary} • Anfitrião: {unit.ownerName}
+                  1 Quarto • 🛏️ {unit.bedSummary} • {unit.managementType === 'co_anfitriao' ? `Co-Anfitrião: ${unit.managerName || unit.ownerName}` : `Anfitrião: ${unit.ownerName}`}
                 </div>
 
                 <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">

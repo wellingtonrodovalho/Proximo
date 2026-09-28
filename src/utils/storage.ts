@@ -2,11 +2,11 @@ import { Unit, UnitTypology, UnitBlock, GuestRequest, AuditLog, SystemConfig } f
 import { createAuditEntry } from './audit';
 
 const STORAGE_KEYS = {
-  UNITS: 'crystal_units_v5',
-  REQUESTS: 'crystal_requests_v5',
-  AUDIT: 'crystal_audit_v5',
-  CONFIG: 'crystal_config_v5',
-  CURRENT_USER_HOST_UNIT: 'crystal_current_host_unit_v5',
+  UNITS: 'crystal_units_v6',
+  REQUESTS: 'crystal_requests_v6',
+  AUDIT: 'crystal_audit_v6',
+  CONFIG: 'crystal_config_v6',
+  CURRENT_USER_HOST_UNIT: 'crystal_current_host_unit_v6',
 };
 
 // Purge legacy cache from browser localStorage to ensure Crystal Place layout loads immediately
@@ -39,6 +39,11 @@ if (typeof window !== 'undefined') {
       'crystal_audit_v4',
       'crystal_config_v4',
       'crystal_current_host_unit_v4',
+      'crystal_units_v5',
+      'crystal_requests_v5',
+      'crystal_audit_v5',
+      'crystal_config_v5',
+      'crystal_current_host_unit_v5',
     ].forEach(k => {
       localStorage.removeItem(k);
     });
@@ -91,133 +96,25 @@ const SEED_ACTIVE_HOSTS: Record<string, SeedHostConfig> = {
     whatsapp: '(62) 99999-0001',
     queuePosition: 2,
   },
-  '103': {
-    ownerName: 'Dra. Mariana Castro',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'mariana.castro@crystalplace.com',
-    ownerPhone: '(62) 99911-1003',
-    whatsapp: '(62) 99911-1003',
-    queuePosition: 3,
-  },
-  '201': {
-    ownerName: 'Carlos Eduardo Mendes',
-    managementType: 'co_anfitriao',
-    managementRoleTitle: 'Co-Anfitrião (Administrador)',
-    ownerEmail: 'carlos.mendes@crystalplace.com',
-    ownerPhone: '(62) 99922-2001',
-    whatsapp: '(62) 99922-2001',
-    queuePosition: 4,
-  },
-  '303': {
-    ownerName: 'Roberto Farias',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'roberto.farias@crystalplace.com',
-    ownerPhone: '(62) 99933-3003',
-    whatsapp: '(62) 99933-3003',
-    queuePosition: 5,
-  },
-  '502': {
-    ownerName: 'Juliana Paes de Barros',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'juliana.paes@crystalplace.com',
-    ownerPhone: '(62) 99955-5002',
-    whatsapp: '(62) 99955-5002',
-    queuePosition: 6,
-  },
-  '703': {
-    ownerName: 'Fernando Albuquerque',
-    managementType: 'co_anfitriao',
-    managementRoleTitle: 'Co-Anfitrião (Administrador)',
-    ownerEmail: 'fernando.albuquerque@crystalplace.com',
-    ownerPhone: '(62) 99977-7003',
-    whatsapp: '(62) 99977-7003',
-    queuePosition: 7,
-  },
-  '901': {
-    ownerName: 'Patrícia Nogueira',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'patricia.nogueira@crystalplace.com',
-    ownerPhone: '(62) 99999-9001',
-    whatsapp: '(62) 99999-9001',
-    queuePosition: 8,
-  },
-  '1203': {
-    ownerName: 'Lucas Vasconcelos',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'lucas.vasconcelos@crystalplace.com',
-    ownerPhone: '(62) 99912-1203',
-    whatsapp: '(62) 99912-1203',
-    queuePosition: 9,
-  },
-  '1402': {
-    ownerName: 'Beatriz Vasques',
-    managementType: 'co_anfitriao',
-    managementRoleTitle: 'Co-Anfitrião (Administrador)',
-    ownerEmail: 'beatriz.vasques@crystalplace.com',
-    ownerPhone: '(62) 99914-1402',
-    whatsapp: '(62) 99914-1402',
-    queuePosition: 10,
-  },
-  '1803': {
-    ownerName: 'Guilherme Siqueira',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'guilherme.siqueira@crystalplace.com',
-    ownerPhone: '(62) 99918-1803',
-    whatsapp: '(62) 99918-1803',
-    queuePosition: 11,
-  },
-  '2001': {
-    ownerName: 'Camila Drummond',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'camila.drummond@crystalplace.com',
-    ownerPhone: '(62) 99920-2001',
-    whatsapp: '(62) 99920-2001',
-    queuePosition: 12,
-  },
-  '2203': {
-    ownerName: 'Thiago Esteves',
-    managementType: 'co_anfitriao',
-    managementRoleTitle: 'Co-Anfitrião (Administrador)',
-    ownerEmail: 'thiago.esteves@crystalplace.com',
-    ownerPhone: '(62) 99922-2203',
-    whatsapp: '(62) 99922-2203',
-    queuePosition: 13,
-  },
-  '2501': {
-    ownerName: 'Daniela Meirelles',
-    managementType: 'anfitriao',
-    managementRoleTitle: 'Anfitrião (Proprietário)',
-    ownerEmail: 'daniela.meirelles@crystalplace.com',
-    ownerPhone: '(62) 99925-2501',
-    whatsapp: '(62) 99925-2501',
-    queuePosition: 14,
-  },
 };
 
 /**
- * Generates all units of Crystal Place Residence:
- * - 25 andares (1º ao 25º)
- * - 13 unidades por andar (01 a 13)
- * - Unidades final 3 possuem 35 m²
+ * Generates all 312 habitation units of Crystal Place Residence:
+ * - Unidades habitacionais iniciam a partir do 2º andar (2º ao 25º andar = 24 andares)
+ * - 13 unidades por andar (00 a 12: ou seja, 200, 201, 202... até 2512)
+ * - 24 andares x 13 unidades = 312 unidades habitacionais
+ * - Unidades final 3 (coluna 03) possuem 35 m²
  * - Demais unidades possuem 33 m²
- * - Unidade 1609: Proprietário Wellington Rodovalho (Anfitrião) - Fila #1 (Ativo)
- * - Unidade 1701: Co-Anfitrião (Administrador) Wellington Rodovalho - Fila #2 (Ativo)
- * - Fila com anfitriões participantes ativos para atendimento imediato de balcão
+ * - Unidades validadas: 1609 (Proprietário Wellington) e 1701 (Co-Anfitrião Wellington)
+ * - Todas as unidades simuladas foram removidas, deixando apenas as validadas ativas no rodízio
  */
 export function generateCrystalPlaceUnits(): Unit[] {
   const units: Unit[] = [];
   const block: UnitBlock = 'Torre Única';
   let counter = 0;
 
-  for (let floor = 1; floor <= 25; floor++) {
-    for (let u = 1; u <= 13; u++) {
+  for (let floor = 2; floor <= 25; floor++) {
+    for (let u = 0; u <= 12; u++) {
       counter++;
       const unitNumber = `${floor}${u < 10 ? '0' + u : u}`;
       

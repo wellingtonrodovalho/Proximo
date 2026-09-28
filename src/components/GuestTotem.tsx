@@ -23,7 +23,8 @@ import {
   Bell,
   Smartphone,
   Ticket,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Unit, GuestRequest, SystemConfig, UnitTypology } from '../types';
@@ -42,6 +43,7 @@ interface GuestTotemProps {
     checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
+    guestNotes?: string;
   }) => void;
   onCancelRequest: (requestId: string) => void;
   onSimulateTimeout: (requestId: string) => void;
@@ -97,6 +99,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
   const [guestName, setGuestName] = useState('');
   const [guestDocument, setGuestDocument] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
+  const [guestNotes, setGuestNotes] = useState('');
   const [guestsCount, setGuestsCount] = useState<number>(2);
   const [nightsCount, setNightsCount] = useState<number>(2);
   const [checkInDate, setCheckInDate] = useState<string>(() => getTodayStr());
@@ -137,12 +140,13 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
   };
 
   // Quick preset helper
-  const handleFillPreset = (name: string, doc: string, phone: string, guests: number, nights: number) => {
+  const handleFillPreset = (name: string, doc: string, phone: string, guests: number, nights: number, note?: string) => {
     setGuestName(name);
     setGuestDocument(doc);
     setGuestPhone(phone);
     setGuestsCount(guests);
     setNightsCount(nights);
+    setGuestNotes(note || '');
     const today = getTodayStr();
     setCheckInDate(today);
     setCheckOutDate(getFutureDateStr(nights, today));
@@ -217,6 +221,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
       checkOutDate,
       typologyPreferred: '1 Quarto',
       petFriendly,
+      guestNotes: guestNotes.trim() ? guestNotes.trim() : undefined,
     });
   };
 
@@ -306,6 +311,16 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
                   </strong>
                 </div>
               </div>
+
+              {activeRequest.guestNotes && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs space-y-0.5">
+                  <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                    <FileText className="w-3.5 h-3.5" />
+                    Observações Registradas do Hóspede:
+                  </span>
+                  <p className="text-slate-200 italic font-medium">"{activeRequest.guestNotes}"</p>
+                </div>
+              )}
 
               {activeRequest.assignedHostName && (
                 <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -451,6 +466,19 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               <span className="text-[10px] text-amber-400 font-medium block mt-0.5">📅 {formatDatePtBr(activeRequest.checkInDate)} até {formatDatePtBr(activeRequest.checkOutDate)}</span>
             </div>
           </div>
+
+          {/* Guest Notes Display */}
+          {activeRequest.guestNotes && (
+            <div className="bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800 text-xs flex items-start gap-2.5 mb-6">
+              <FileText className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-slate-300 block text-[11px] uppercase tracking-wider">
+                  Observações do Solicitante / Hóspede:
+                </strong>
+                <p className="text-slate-400 italic mt-0.5">"{activeRequest.guestNotes}"</p>
+              </div>
+            </div>
+          )}
 
           {/* Stepper tracker */}
           <div className="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 mb-6">
@@ -670,7 +698,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => handleFillPreset('Dr. Thiago Medeiros', '381.992.108-44', '(62) 98144-2200', 2, 2)}
+                onClick={() => handleFillPreset('Dr. Thiago Medeiros', '381.992.108-44', '(62) 98144-2200', 2, 2, 'Chegada prevista às 21h, preferência por andar alto')}
                 className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left text-xs text-slate-300 transition-all group"
               >
                 <div className="font-bold text-white group-hover:text-amber-300 truncate">Dr. Thiago Medeiros</div>
@@ -678,7 +706,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFillPreset('Carla Beatriz Alencar', '822.401.559-01', '(62) 99877-3311', 3, 3)}
+                onClick={() => handleFillPreset('Carla Beatriz Alencar', '822.401.559-01', '(62) 99877-3311', 3, 3, 'Família com criança, solicitar berço ou cama extra')}
                 className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left text-xs text-slate-300 transition-all group"
               >
                 <div className="font-bold text-white group-hover:text-amber-300 truncate">Carla Beatriz</div>
@@ -686,7 +714,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => handleFillPreset('Eng. Marcelo Queiroz', '119.482.003-88', '(62) 98711-6644', 1, 1)}
+                onClick={() => handleFillPreset('Eng. Marcelo Queiroz', '119.482.003-88', '(62) 98711-6644', 1, 1, 'Viagem a trabalho, necessita de Wi-Fi de alta velocidade')}
                 className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left text-xs text-slate-300 transition-all group"
               >
                 <div className="font-bold text-white group-hover:text-amber-300 truncate">Eng. Marcelo Queiroz</div>
@@ -892,6 +920,27 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
                   <span>Estou viajando com animal de estimação (Pet Friendly)</span>
                 </div>
               </label>
+            </div>
+
+            {/* Step 3: Observações do Solicitante */}
+            <div className="space-y-2 pt-4 border-t border-slate-800">
+              <label className="block text-xs font-semibold text-slate-200 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-amber-300">
+                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                  3. Observações do Solicitante (Opcional)
+                </span>
+                <span className="text-[10px] text-slate-500 font-normal">Enviado diretamente ao anfitrião</span>
+              </label>
+              <textarea
+                rows={3}
+                value={guestNotes}
+                onChange={(e) => setGuestNotes(e.target.value)}
+                placeholder="Ex: Chegada prevista às 21h, preferência por andar alto, berço para bebê, necessidade de acessibilidade, cama extra, etc."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-colors resize-none leading-relaxed"
+              />
+              <span className="text-[11px] text-slate-500 block">
+                Estas observações serão anexadas ao chamado e enviadas por WhatsApp, E-mail e exibidas no painel do anfitrião.
+              </span>
             </div>
 
             {/* Submit */}

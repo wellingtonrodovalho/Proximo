@@ -76,6 +76,7 @@ export interface GuestRequest {
   checkOutDate: string;
   typologyPreferred: string;
   petFriendly: boolean;
+  guestNotes?: string; // Observações do Solicitante
   status: RequestStatus;
   currentAttemptIndex: number;
   callAttempts: CallAttempt[];

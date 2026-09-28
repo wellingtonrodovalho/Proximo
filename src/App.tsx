@@ -117,9 +117,9 @@ export default function App() {
     saveAccessAccounts(accessAccounts);
   }, [accessAccounts]);
 
-  const updateUrlForRole = useCallback((role: 'guest' | 'host' | 'reception' | 'admin', unitNumber?: string) => {
+  const updateUrlForRole = useCallback((role: 'guest' | 'host' | 'reception' | 'admin') => {
     if (typeof window === 'undefined') return;
-    const url = buildPortalUrl(role, unitNumber);
+    const url = buildPortalUrl(role);
     window.history.replaceState({}, '', url);
   }, []);
 
@@ -136,7 +136,7 @@ export default function App() {
     }
     setActiveTab(newSession.role);
     setIsLoginModalOpen(false);
-    updateUrlForRole(newSession.role, newSession.unitNumber);
+    updateUrlForRole(newSession.role);
   }, [updateUrlForRole]);
 
   const handleLogout = useCallback(() => {
@@ -154,7 +154,7 @@ export default function App() {
     }
     if (session && (session.role === tab || session.role === 'admin')) {
       setActiveTab(tab);
-      updateUrlForRole(tab, session.unitNumber);
+      updateUrlForRole(tab);
     } else {
       handleOpenLogin(tab);
     }
@@ -306,6 +306,7 @@ export default function App() {
     checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
+    guestNotes?: string;
   }) => {
     const voucherCode = 'BAL-' + Math.floor(1000 + Math.random() * 9000);
     const todayStr = new Date().toISOString().split('T')[0];
@@ -324,6 +325,7 @@ export default function App() {
       checkOutDate,
       typologyPreferred: formData.typologyPreferred,
       petFriendly: formData.petFriendly,
+      guestNotes: formData.guestNotes?.trim() ? formData.guestNotes.trim() : undefined,
       status: 'waiting_host',
       currentAttemptIndex: 0,
       callAttempts: [],
@@ -337,10 +339,11 @@ export default function App() {
     };
 
     // Log the guest arrival event
+    const notesLog = formData.guestNotes ? ` Obs: "${formData.guestNotes}".` : '';
     const guestLog = createAuditEntry(
       'GUEST_CHECKIN_INITIATED',
       'Hóspede',
-      `Hóspede ${formData.guestName} (${formData.guestDocument}) iniciou solicitação de balcão via QR Code para ${formData.guestsCount} pessoa(s), ${formData.nightsCount} noite(s) (Voucher ${voucherCode}).`,
+      `Hóspede ${formData.guestName} (${formData.guestDocument}) iniciou solicitação de balcão via QR Code para ${formData.guestsCount} pessoa(s), ${formData.nightsCount} noite(s) (Voucher ${voucherCode}).${notesLog}`,
       { voucherCode, guestName: formData.guestName },
       auditLogs
     );
@@ -373,6 +376,7 @@ export default function App() {
         checkInDate: updatedRequest.checkInDate,
         checkOutDate: updatedRequest.checkOutDate,
         totalAmount: updatedRequest.totalAmount,
+        guestNotes: updatedRequest.guestNotes,
         unit: {
           id: calledUnit.id,
           unitNumber: calledUnit.unitNumber,
@@ -1071,7 +1075,13 @@ export default function App() {
         onClose={() => setIsShareLinksOpen(false)}
         complexName={config.complexName}
         currentHostUnitNumber={currentUnit?.unitNumber}
+        currentUserName={session?.userName}
         onOpenManual={() => setIsManualModalOpen(true)}
+        onTestGenericLogin={() => {
+          handleLogout();
+          setLoginTargetRole('host');
+          setIsLoginModalOpen(true);
+        }}
       />
 
       {/* Official Instructions Manual PDF Modal */}

@@ -22,7 +22,9 @@ interface ShareLinksModalProps {
   onClose: () => void;
   complexName: string;
   currentHostUnitNumber?: string;
+  currentUserName?: string;
   onOpenManual?: () => void;
+  onTestGenericLogin?: () => void;
 }
 
 export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
@@ -30,14 +32,17 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
   onClose,
   complexName,
   currentHostUnitNumber,
+  currentUserName,
   onOpenManual,
+  onTestGenericLogin,
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const guestUrl = buildPortalUrl('guest');
-  const hostUrl = buildPortalUrl('host', currentHostUnitNumber);
+  // Generic portal URL without tying to any specific unit
+  const hostUrl = buildPortalUrl('host');
   const receptionUrl = buildPortalUrl('reception');
   const adminUrl = buildPortalUrl('admin');
 
@@ -48,7 +53,7 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
   };
 
   const getHostShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nPrezado(a) Anfitrião(a),\n\nSegue seu link de acesso ao *Portal do Anfitrião* para participar do rodízio autônomo de hóspedes de balcão:\n\n🔗 ${hostUrl}\n\n🔑 *Acesso Restrito:*\nCadastre seu Nome, E-mail, Telefone (WhatsApp) e Unidade. O Administrador valida e libera seu acesso rapidamente!\n\nPor favor, mantenha sua disponibilidade ativa para receber os chamados em tempo real.`;
+    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nPrezado(a) Anfitrião(a) / Co-Anfitrião(a),\n\nSegue o link oficial de acesso ao *Portal do Anfitrião* para participar do rodízio autônomo de hóspedes de balcão:\n\n🔗 ${hostUrl}\n\n🔑 *Validação de Acesso:*\nAo acessar o link, digite seu E-mail ou Telefone na aba "Já Tenho Cadastro" para validar seu credenciamento e gerenciar seu apartamento.\n\nCaso ainda não possua credenciamento, envie seus dados na aba "Solicitar Acesso".\n\nPor favor, mantenha sua disponibilidade ativa para receber os chamados da portaria em tempo real!`;
   };
 
   const getReceptionShareMessage = () => {
@@ -134,6 +139,43 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
                 <MessageSquare className="w-3.5 h-3.5" />
                 <span>Enviar via WhatsApp</span>
               </a>
+            </div>
+
+            {/* Explainer: Why did it open your unit during your test? */}
+            <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-xs space-y-2">
+              <div className="flex items-start gap-2 text-slate-300">
+                <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-bold text-amber-300 block">
+                    Por que ao testar o link ele conduziu para sua unidade?
+                  </span>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    O link oficial acima é <strong>100% genérico</strong> (<code className="text-amber-400 bg-slate-950 px-1 py-0.5 rounded">?portal=anfitriao</code>), sem amarrações a nenhum apartamento.
+                    Como você já está autenticado como <strong>{currentUserName || 'Wellington Rodovalho'}</strong>{currentHostUnitNumber ? ` (Apto ${currentHostUnitNumber})` : ''} neste navegador, ele restaura sua sessão ativa.
+                  </p>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Para qualquer outro anfitrião ou em uma <strong>Aba Anônima</strong>, o sistema <strong>NÃO</strong> entra em sua unidade: ele abre a tela de validação onde o anfitrião coloca o e-mail ou telefone para autenticar seu próprio apartamento.
+                  </p>
+                </div>
+              </div>
+
+              {onTestGenericLogin && (
+                <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-500">
+                    Deseja simular o acesso de um anfitrião novo sem sua sessão?
+                  </span>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onTestGenericLogin();
+                    }}
+                    className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-bold text-xs rounded-lg border border-amber-500/30 transition-all flex items-center gap-1.5"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Testar Validação de Acesso (Desconectar)</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

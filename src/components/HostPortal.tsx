@@ -31,7 +31,8 @@ import {
   Building,
   ShieldAlert,
   Edit3,
-  Mail
+  Mail,
+  FileText
 } from 'lucide-react';
 import { Unit, GuestRequest, SystemConfig, BedConfig, UnitBlock } from '../types';
 import { playChime } from '../utils/audio';
@@ -927,6 +928,19 @@ export const HostPortal: React.FC<HostPortalProps> = ({
               </span>
             </div>
           </div>
+
+          {/* Observações do Solicitante / Hóspede */}
+          {activeRequest.guestNotes && (
+            <div className="my-4 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs space-y-1">
+              <span className="text-amber-400 font-bold flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                <FileText className="w-4 h-4 text-amber-400" />
+                Observações do Solicitante / Hóspede:
+              </span>
+              <p className="text-slate-200 font-medium italic text-sm">
+                "{activeRequest.guestNotes}"
+              </p>
+            </div>
+          )}
 
           {/* WhatsApp Alert Notice */}
           <div className="bg-slate-950/90 rounded-2xl p-4 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs mb-6">

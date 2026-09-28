@@ -15,7 +15,8 @@ import {
   Check, 
   ShieldCheck,
   Send,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import { GuestRequest, Unit } from '../types';
 import { playChime } from '../utils/audio';
@@ -72,6 +73,7 @@ export const DispatchNotificationModal: React.FC<DispatchNotificationModalProps>
     checkInDate: request.checkInDate,
     checkOutDate: request.checkOutDate,
     totalAmount: request.totalAmount,
+    guestNotes: request.guestNotes,
   });
   const waUrl = getWhatsAppDirectUrl(targetPhone, waMessage);
 
@@ -84,6 +86,7 @@ export const DispatchNotificationModal: React.FC<DispatchNotificationModalProps>
     hostEmail: targetEmail,
     nightsCount: request.nightsCount,
     totalAmount: request.totalAmount,
+    guestNotes: request.guestNotes,
   });
 
   // SMS
@@ -94,6 +97,7 @@ export const DispatchNotificationModal: React.FC<DispatchNotificationModalProps>
     nightsCount: request.nightsCount,
     totalAmount: request.totalAmount,
     phone: targetPhone,
+    guestNotes: request.guestNotes,
   });
 
   const handleCopyMessage = (text: string) => {
@@ -185,6 +189,19 @@ export const DispatchNotificationModal: React.FC<DispatchNotificationModalProps>
             <span>Editar Meu WhatsApp / Cadastro</span>
           </button>
         </div>
+
+        {/* Observações do Solicitante / Hóspede */}
+        {request.guestNotes && (
+          <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs space-y-1">
+            <span className="text-amber-400 font-bold flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+              <FileText className="w-4 h-4 text-amber-400" />
+              Observações do Solicitante:
+            </span>
+            <p className="text-slate-200 font-medium italic">
+              "{request.guestNotes}"
+            </p>
+          </div>
+        )}
 
         {/* Explanation: How the host is notified */}
         <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-200 flex items-start gap-2.5">

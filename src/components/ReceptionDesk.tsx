@@ -240,6 +240,11 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
                   <td className="py-3.5 px-4">
                     <strong className="text-white block">{req.guestName}</strong>
                     <span className="text-slate-500 text-[11px]">{req.guestDocument} • {req.guestPhone}</span>
+                    {req.guestNotes && (
+                      <span className="text-[11px] text-amber-300/90 block italic mt-0.5">
+                        Obs: "{req.guestNotes}"
+                      </span>
+                    )}
                   </td>
 
                   {/* Assigned Unit */}
@@ -385,6 +390,14 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
                   Apartamento {selectedRequestForValidation.assignedUnitNumber} ({selectedRequestForValidation.assignedUnitBlock})
                 </strong>
               </div>
+              {selectedRequestForValidation.guestNotes && (
+                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs">
+                  <span className="text-amber-400 font-bold block text-[10px] uppercase tracking-wider">
+                    Obs. do Hóspede:
+                  </span>
+                  <span className="text-slate-200 italic">"{selectedRequestForValidation.guestNotes}"</span>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleConfirmKeyDelivery} className="space-y-4">
