@@ -62,6 +62,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'units' | 'queue' | 'accounts' | 'audit' | 'metrics' | 'settings'>('units');
   const [searchUnit, setSearchUnit] = useState('');
   const [filterBlock, setFilterBlock] = useState<string>('all');
+  const [filterFloor, setFilterFloor] = useState<string>('all');
+  const [filterManagement, setFilterManagement] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active_queue' | 'inactive_host' | 'blocked_admin'>('all');
   const [filterAccountStatus, setFilterAccountStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
@@ -91,6 +93,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (!matchesSearch) return false;
 
     if (filterBlock !== 'all' && u.block !== filterBlock) return false;
+    if (filterFloor !== 'all' && String(u.floor) !== filterFloor) return false;
+    if (filterManagement === 'anfitriao' && u.managementType !== 'anfitriao') return false;
+    if (filterManagement === 'co_anfitriao' && u.managementType !== 'co_anfitriao') return false;
+    if (filterManagement === 'pending' && u.ownerName) return false;
 
     if (filterStatus === 'active_queue' && (!u.isEligibleByAdmin || !u.isAvailableByHost)) return false;
     if (filterStatus === 'inactive_host' && (!u.isEligibleByAdmin || u.isAvailableByHost)) return false;
@@ -129,7 +135,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `auditoria_rotativo302_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `auditoria_crystal_place_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -149,8 +155,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             Gestão e Auditoria • Crystal Place Residence
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-            Monitore todas as 302 unidades, ative ou inative condôminos no rodízio, 
-            e consulte a trilha de auditoria para garantir blindagem contra favorecimento.
+            Monitore as unidades organizadas em 25 andares (13 unidades por andar), com gestão por Anfitrião ou Co-Anfitrião (Administrador), 
+            ative ou inative condôminos no rodízio e consulte a auditoria para integridade total.
           </p>
           {onOpenManual && (
             <div className="mt-3">
@@ -165,23 +171,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           )}
         </div>
 
-        {/* Global Stats Grid */}
+        {/* Global Stats Grid - 25 Andares (sem expor contagem de unidades) */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
           <div className="text-center px-2">
-            <span className="text-[10px] text-slate-500 uppercase font-semibold block">Total</span>
-            <span className="text-lg font-black text-white">{totalUnits} aptos</span>
+            <span className="text-[10px] text-slate-500 uppercase font-semibold block">Estrutura</span>
+            <span className="text-lg font-black text-white">25 Andares</span>
+            <span className="text-[10px] text-amber-400 block font-medium">13 un. por andar</span>
           </div>
           <div className="text-center px-2 border-l border-slate-800">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Fila Hoje</span>
             <span className="text-lg font-black text-emerald-400">{activeInQueueUnits.length} ativos</span>
+            <span className="text-[10px] text-slate-500 block font-medium">No pool rotativo</span>
           </div>
           <div className="text-center px-2 border-l border-slate-800">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Bloqueados</span>
             <span className="text-lg font-black text-rose-400">{blockedByAdminCount}</span>
+            <span className="text-[10px] text-slate-500 block font-medium">Restrição admin</span>
           </div>
           <div className="text-center px-2 border-l border-slate-800">
             <span className="text-[10px] text-slate-500 uppercase font-semibold block">Locações</span>
             <span className="text-lg font-black text-amber-400">{totalBookingsCompleted}</span>
+            <span className="text-[10px] text-slate-500 block font-medium">Concluídas</span>
           </div>
         </div>
       </div>
@@ -197,7 +207,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           }`}
         >
           <Building2 className="w-4 h-4" />
-          <span>Gestão das 302 Unidades</span>
+          <span>Gestão das Unidades</span>
         </button>
 
         <button
@@ -302,22 +312,48 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <option value="inactive_host">Pausados pelo Anfitrião</option>
                 <option value="blocked_admin">Bloqueados pelo Síndico</option>
               </select>
+
+              {/* Floor Filter (25 Andares) */}
+              <select
+                value={filterFloor}
+                onChange={(e) => setFilterFloor(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500"
+              >
+                <option value="all">Todos os 25 Andares</option>
+                {Array.from({ length: 25 }, (_, i) => i + 1).map(f => (
+                  <option key={f} value={String(f)}>
+                    {f}º Andar {f === 16 ? '(Apto 1609 - Wellington)' : f === 17 ? '(Apto 1701 - Wellington)' : ''}
+                  </option>
+                ))}
+              </select>
+
+              {/* Management Type Filter */}
+              <select
+                value={filterManagement}
+                onChange={(e) => setFilterManagement(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500"
+              >
+                <option value="all">Todas as Gestões</option>
+                <option value="anfitriao">Anfitrião (Proprietário)</option>
+                <option value="co_anfitriao">Co-Anfitrião (Administrador)</option>
+                <option value="pending">Aguardando Credenciamento</option>
+              </select>
             </div>
 
             <div className="text-xs text-slate-400 flex items-center">
-              Mostrando <strong className="text-white mx-1">{filteredUnits.length}</strong> de {totalUnits} unidades
+              Mostrando <strong className="text-white mx-1">{filteredUnits.length}</strong> unidades filtradas
             </div>
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto max-h-[550px] overflow-y-auto pr-1">
+          <div className="overflow-x-auto max-h-[580px] overflow-y-auto pr-1">
             <table className="w-full text-left text-xs text-slate-300">
               <thead className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider sticky top-0 z-10">
                 <tr>
                   <th className="py-3 px-4">Unidade</th>
-                  <th className="py-3 px-4">Andar</th>
+                  <th className="py-3 px-4">Andar & Metragem</th>
                   <th className="py-3 px-4">Tipologia</th>
-                  <th className="py-3 px-4">Responsável & WhatsApp</th>
+                  <th className="py-3 px-4">Gestão & Contato</th>
                   <th className="py-3 px-4">Disponibilidade Balcão</th>
                   <th className="py-3 px-4">Posição Fila</th>
                   <th className="py-3 px-4">Locações</th>
@@ -325,8 +361,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
-                {filteredUnits.slice(0, 100).map((unit) => {
+                {filteredUnits.map((unit) => {
                   const isInQueue = unit.isEligibleByAdmin && unit.isAvailableByHost;
+                  const isFinal3 = unit.unitNumber.endsWith('03') || unit.unitNumber.endsWith('3') || unit.area === 35;
+                  const unitArea = unit.area || (isFinal3 ? 35 : 33);
                   return (
                     <tr key={unit.id} className="hover:bg-slate-800/30 transition-colors">
                       
@@ -337,6 +375,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                       <td className="py-3 px-4">
                         <span className="text-white font-mono font-bold text-xs">{unit.floor}º Andar</span>
+                        <div className="mt-0.5">
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+                            isFinal3 
+                              ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' 
+                              : 'bg-slate-800 text-slate-300 border-slate-700'
+                          }`}>
+                            {unitArea}m² {isFinal3 ? '• Final 3' : ''}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-3 px-4">
@@ -348,14 +395,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <td className="py-3 px-4">
                         {unit.ownerName ? (
                           <>
-                            <strong className="text-slate-200 block">{unit.ownerName}</strong>
+                            <div className="flex items-center gap-1.5">
+                              <strong className="text-slate-200 block">{unit.managerName || unit.ownerName}</strong>
+                              {unit.managementType === 'co_anfitriao' ? (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                                  Co-Anfitrião (Admin)
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                                  Anfitrião (Proprietário)
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className="text-slate-400 text-[10px]">{unit.whatsapp || unit.ownerPhone}</span>
                               {(unit.whatsapp || unit.ownerPhone) && (
                                 <a
                                   href={getWhatsAppDirectUrl(
                                     unit.whatsapp || unit.ownerPhone,
-                                    `Olá ${unit.ownerName}! Contato da administração do Crystal Place Residence (App PROXIMO) referente ao Apto ${unit.unitNumber} (${unit.floor}º Andar).`
+                                    `Olá ${unit.managerName || unit.ownerName}! Contato da administração do Crystal Place Residence (App PROXIMO) referente ao Apto ${unit.unitNumber} (${unit.floor}º Andar).`
                                   )}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -633,7 +691,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       {/* TAB 5: SYSTEM RULES & SETTINGS */}
       {activeTab === 'settings' && (
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-2xl space-y-6">
-          <h3 className="text-lg font-bold text-white">Configurações Gerais do Rodízio 302</h3>
+          <h3 className="text-lg font-bold text-white">Configurações Gerais do Rodízio PROXIMO • Crystal Place Residence</h3>
 
           <div className="space-y-4">
             <div>

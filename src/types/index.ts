@@ -9,9 +9,10 @@ export interface BedConfig {
 
 export interface Unit {
   id: string;
-  unitNumber: string; // e.g. "101", "304", "1208"
+  unitNumber: string; // e.g. "101", "1609", "1701", "2513"
   block: UnitBlock;
-  floor: number;
+  floor: number; // 1 to 25
+  area: number; // 35 m² para unidades final 3, 33 m² para as demais
   roomsCount: 1; // Todos os imóveis do complexo possuem exatamente 1 quarto
   typology: UnitTypology;
   bedsCount: number; // Total number of beds
@@ -20,7 +21,10 @@ export interface Unit {
   capacity: number; // max guests
   basePrice: number; // Daily price in R$ for counter walk-ins (MÍNIMO R$ 200,00)
   cleaningFee: number;
-  ownerName: string; // Nome do Responsável / Proprietário
+  ownerName: string; // Nome do Proprietário / Responsável
+  managerName?: string; // Nome do Co-Anfitrião / Administrador (se aplicável)
+  managementType?: 'anfitriao' | 'co_anfitriao'; // Tipo de administração da unidade
+  managementRoleTitle?: string; // e.g. "Anfitrião (Proprietário)" | "Co-Anfitrião (Administrador)"
   ownerEmail: string; // E-mail do Responsável
   ownerPhone: string; // Telefone
   whatsapp: string; // Forma de contato principal obrigatória (WhatsApp do responsável)
@@ -129,7 +133,9 @@ export interface AuditLog {
 
 export interface SystemConfig {
   complexName: string;
-  totalUnitsCount: number;
+  totalFloors: number; // 25 andares
+  unitsPerFloor: number; // 13 unidades por andar
+  totalUnitsCount?: number; // Internal counter (not displayed to user per specification)
   timeoutMinutes: number; // default 5 minutes
   demoFastTimeoutSeconds?: number; // for testing (e.g. 30 seconds toggle)
   allowPetFilter: boolean;

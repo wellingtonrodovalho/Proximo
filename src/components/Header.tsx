@@ -20,7 +20,7 @@ interface HeaderProps {
   activeTab: 'guest' | 'host' | 'reception' | 'admin';
   setActiveTab: (tab: 'guest' | 'host' | 'reception' | 'admin') => void;
   activeQueueCount: number;
-  totalUnitsCount: number;
+  totalUnitsCount?: number;
   pendingRequestsCount: number;
   soundEnabled: boolean;
   setSoundEnabled: (val: boolean) => void;
@@ -150,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <KeyRound className="w-4 h-4 text-amber-400" />
                     <div>
                       <span className="text-slate-400 font-medium hidden sm:inline">Portal do Anfitrião: </span>
-                      <strong className="text-white">Apto {currentHostUnitNumber || '101'}</strong>
+                      <strong className="text-white">Apto {currentHostUnitNumber || '1609'}</strong>
                     </div>
                   </>
                 )}

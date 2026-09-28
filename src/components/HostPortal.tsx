@@ -343,14 +343,21 @@ export const HostPortal: React.FC<HostPortalProps> = ({
     const bedsCount = calculateTotalBeds(newBedTypes);
     const bedSummary = generateBedSummary(newBedTypes);
 
-    const newUnitId = `unit-${newUnitNumber.trim()}`;
+    const cleanUnitNumber = newUnitNumber.trim();
+    const isFinal3 = cleanUnitNumber.endsWith('03') || cleanUnitNumber.endsWith('3');
+    const area = isFinal3 ? 35 : 33;
+
+    const newUnitId = `unit-${cleanUnitNumber}`;
     const newUnit: Unit = {
       id: newUnitId,
-      unitNumber: newUnitNumber.trim(),
+      unitNumber: cleanUnitNumber,
       block: 'Torre Única',
       floor: Number(newFloor) || 1,
+      area,
       roomsCount: 1,
       typology: '1 Quarto',
+      managementType: 'anfitriao',
+      managementRoleTitle: 'Anfitrião (Proprietário)',
       bedsCount,
       bedTypes: newBedTypes,
       bedSummary,
@@ -432,21 +439,75 @@ export const HostPortal: React.FC<HostPortalProps> = ({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 mt-1.5">
-              <h2 className="text-2xl font-black text-white">
-                Apartamento {currentUnit?.unitNumber}
-              </h2>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <span className="text-xs text-slate-400 font-semibold mr-1">Minhas Unidades:</span>
+              <button
+                onClick={() => setCurrentHostUnitId('unit-1609')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                  currentHostUnitId === 'unit-1609'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20 font-black'
+                    : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-amber-500/50 hover:text-white'
+                }`}
+                title="Acessar Apto 1609 como Proprietário / Anfitrião"
+              >
+                <span>Apto 1609</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/25 font-normal">16º Andar • 33m² • Proprietário</span>
+              </button>
 
-              {/* Unit Dropdown Switcher to test or select among units */}
+              <button
+                onClick={() => setCurrentHostUnitId('unit-1701')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                  currentHostUnitId === 'unit-1701'
+                    ? 'bg-blue-500 text-white border-blue-400 shadow-md shadow-blue-500/20 font-black'
+                    : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-blue-500/50 hover:text-white'
+                }`}
+                title="Acessar Apto 1701 como Co-Anfitrião / Administrador"
+              >
+                <span>Apto 1701</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/25 font-normal">17º Andar • 33m² • Co-Anfitrião</span>
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-black text-white">
+                  Apartamento {currentUnit?.unitNumber}
+                </h2>
+                <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                  {currentUnit?.floor}º Andar
+                </span>
+                <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                  currentUnit?.area === 35 
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' 
+                    : 'bg-slate-800 text-slate-300 border-slate-700'
+                }`}>
+                  📐 {currentUnit?.area || (currentUnit?.unitNumber?.endsWith('03') ? 35 : 33)}m² {currentUnit?.area === 35 ? '(Final 3)' : ''}
+                </span>
+                {currentUnit?.managementType === 'co_anfitriao' ? (
+                  <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                    Co-Anfitrião (Administrador)
+                  </span>
+                ) : currentUnit?.ownerName ? (
+                  <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                    Anfitrião (Proprietário)
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded text-xs font-medium bg-slate-800/80 text-slate-400 border border-slate-700">
+                    Aguardando Credenciamento
+                  </span>
+                )}
+              </div>
+
+              {/* Unit Dropdown Switcher with all 25 floors */}
               <select
                 value={currentHostUnitId}
                 onChange={(e) => setCurrentHostUnitId(e.target.value)}
                 className="bg-slate-950 border border-slate-700 text-slate-300 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
                 title="Trocar de Unidade para Gerenciar"
               >
-                {units.slice(0, 100).map(u => (
+                {units.map(u => (
                   <option key={u.id} value={u.id}>
-                    Apto {u.unitNumber} ({u.floor}º Andar) {u.ownerName ? `• ${u.ownerName}` : '• Sem anfitrião credenciado'}
+                    Apto {u.unitNumber} ({u.floor}º Andar • {u.area}m²) {u.ownerName ? `• ${u.managementRoleTitle || (u.managementType === 'co_anfitriao' ? 'Co-Anfitrião' : 'Proprietário')}: ${u.ownerName}` : '• Sem anfitrião credenciado'}
                   </option>
                 ))}
               </select>
@@ -467,7 +528,10 @@ export const HostPortal: React.FC<HostPortalProps> = ({
                 <>
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Responsável: <strong className="text-white font-semibold">{currentUnit.ownerName}</strong></span>
+                    <span>
+                      {currentUnit?.managementType === 'co_anfitriao' ? 'Administrador / Co-Anfitrião' : 'Responsável / Proprietário'}: 
+                      <strong className="text-white font-semibold ml-1">{currentUnit.managerName || currentUnit.ownerName}</strong>
+                    </span>
                   </div>
                   <span>•</span>
                   <div className="flex items-center gap-1.5 text-emerald-300 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
@@ -1350,7 +1414,7 @@ export const HostPortal: React.FC<HostPortalProps> = ({
           <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-400">
             <strong className="text-slate-200 block mb-1">Princípio da Rotatividade:</strong>
             Sempre que uma locação é aceita por você, o sistema registra a operação e posiciona seu apartamento no final da fila. 
-            Isso garante oportunidade igual para todos os 302 condôminos que participam do pool de balcão do Crystal Place Residence (App PROXIMO).
+            Isso garante oportunidade igual para todos os anfitriões e co-anfitriões credenciados que participam do pool de balcão do Crystal Place Residence (App PROXIMO).
           </div>
         </div>
       )}

@@ -674,7 +674,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               Garantia de Imparcialidade
             </div>
             <h4 className="text-base font-bold text-white">
-              Como funciona o Rodízio 302?
+              Como funciona o Rodízio Crystal Place?
             </h4>
             <ul className="text-xs text-slate-400 space-y-2.5">
               <li className="flex items-start gap-2">

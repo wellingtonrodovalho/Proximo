@@ -35,7 +35,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
   const handleDownloadPdf = () => {
     try {
       setIsDownloading(true);
-      const doc = generateManualPdf({ condoName, totalUnits: 302 });
+      const doc = generateManualPdf({ condoName });
       doc.save(`Manual_Instrucoes_PROXIMO_${condoName.replace(/\s+/g, '_')}.pdf`);
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3500);
@@ -184,10 +184,10 @@ export const ManualModal: React.FC<ManualModalProps> = ({
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2 text-amber-400 font-black text-base">
                   <KeyRound className="w-5 h-5" />
-                  <h3>1. NÍVEL ANFITRIÃO (PROPRIETÁRIO DO APARTAMENTO)</h3>
+                  <h3>1. NÍVEL ANFITRIÃO OU CO-ANFITRIÃO (ADMINISTRADOR)</h3>
                 </div>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-bold">
-                  Torre Única (101 a 2004)
+                  Crystal Place • 25 Andares (13 un./andar)
                 </span>
               </div>
 

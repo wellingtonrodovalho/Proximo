@@ -2,14 +2,14 @@ import { Unit, UnitTypology, UnitBlock, GuestRequest, AuditLog, SystemConfig } f
 import { createAuditEntry } from './audit';
 
 const STORAGE_KEYS = {
-  UNITS: 'rotativo302_units_v3_clean',
-  REQUESTS: 'rotativo302_requests_v3_clean',
-  AUDIT: 'rotativo302_audit_v3_clean',
-  CONFIG: 'rotativo302_config_v3_clean',
-  CURRENT_USER_HOST_UNIT: 'rotativo302_current_host_unit',
+  UNITS: 'crystal_units_v4',
+  REQUESTS: 'crystal_requests_v4',
+  AUDIT: 'crystal_audit_v4',
+  CONFIG: 'crystal_config_v4',
+  CURRENT_USER_HOST_UNIT: 'crystal_current_host_unit_v4',
 };
 
-// Purge legacy and mock data from browser localStorage to guarantee completely clean database
+// Purge legacy cache from browser localStorage to ensure Crystal Place layout loads immediately
 if (typeof window !== 'undefined') {
   try {
     [
@@ -28,6 +28,12 @@ if (typeof window !== 'undefined') {
       'rotativo302_audit_pristine_v2',
       'rotativo302_config_pristine_v2',
       'proximo_access_accounts_pristine_v2',
+      'rotativo302_units_v3_clean',
+      'rotativo302_requests_v3_clean',
+      'rotativo302_audit_v3_clean',
+      'rotativo302_config_v3_clean',
+      'rotativo302_current_host_unit',
+      'proximo_access_accounts_v3_clean',
     ].forEach(k => {
       localStorage.removeItem(k);
     });
@@ -45,43 +51,75 @@ const UNIT_PHOTOS: string[] = [
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
 ];
 
-export function generate302Units(): Unit[] {
+/**
+ * Generates all units of Crystal Place Residence:
+ * - 25 andares (1º ao 25º)
+ * - 13 unidades por andar (01 a 13)
+ * - Unidades final 3 possuem 35 m²
+ * - Demais unidades possuem 33 m²
+ * - Unidade 1609: Proprietário Wellington Rodovalho (Anfitrião)
+ * - Unidade 1701: Co-Anfitrião (Administrador) Wellington Rodovalho
+ * - As demais unidades iniciam limpas aguardando credenciamento de Anfitrião ou Co-Anfitrião.
+ */
+export function generateCrystalPlaceUnits(): Unit[] {
   const units: Unit[] = [];
   const block: UnitBlock = 'Torre Única';
-  let count = 0;
+  let counter = 0;
 
-  // Single tower with 302 units (26 floors, 11-12 units per floor)
-  // All units start clean with NO mock owners.
-  // Owners are only registered when an actual host requests access and is accredited by the administrator.
-  // Exception: Unit 302 is pre-assigned to Wellington Rodovalho (Admin/Síndico & Anfitrião).
-  for (let floor = 1; floor <= 26; floor++) {
-    const unitsPerFloor = floor <= 16 ? 12 : 11;
-    for (let u = 1; u <= unitsPerFloor; u++) {
-      if (count >= 302) break;
-      count++;
-
+  for (let floor = 1; floor <= 25; floor++) {
+    for (let u = 1; u <= 13; u++) {
+      counter++;
       const unitNumber = `${floor}${u < 10 ? '0' + u : u}`;
-      const isWellingtonUnit = unitNumber === '302';
+      
+      // As unidades com final 3 (coluna 03) têm 35m², as demais são de 33m²
+      const isFinal3 = u === 3;
+      const area = isFinal3 ? 35 : 33;
 
-      // Clean state: no mock owners or fake data
-      const ownerName = isWellingtonUnit ? 'Wellington Rodovalho' : '';
-      const ownerEmail = isWellingtonUnit ? 'Wellington.Rodovalho@gmail.com' : '';
-      const ownerPhone = isWellingtonUnit ? '(62) 99999-0001' : '';
-      const whatsapp = isWellingtonUnit ? '(62) 99999-0001' : '';
+      // Wellington Rodovalho:
+      // Proprietário da unidade 1609 no 16º andar
+      // Administra (Co-Anfitrião) a Unidade 1701 no 17º andar
+      const isWellington1609 = unitNumber === '1609';
+      const isWellington1701 = unitNumber === '1701';
 
-      // Todos os imóveis do complexo possuem exatamente 1 quarto
+      let ownerName = '';
+      let managerName: string | undefined = undefined;
+      let managementType: Unit['managementType'] = undefined;
+      let managementRoleTitle: string | undefined = undefined;
+      let ownerEmail = '';
+      let ownerPhone = '';
+      let whatsapp = '';
+
+      if (isWellington1609) {
+        ownerName = 'Wellington Rodovalho';
+        managerName = 'Wellington Rodovalho';
+        managementType = 'anfitriao';
+        managementRoleTitle = 'Anfitrião (Proprietário)';
+        ownerEmail = 'Wellington.Rodovalho@gmail.com';
+        ownerPhone = '(62) 99999-0001';
+        whatsapp = '(62) 99999-0001';
+      } else if (isWellington1701) {
+        ownerName = 'Proprietário Unidade 1701';
+        managerName = 'Wellington Rodovalho';
+        managementType = 'co_anfitriao';
+        managementRoleTitle = 'Co-Anfitrião (Administrador)';
+        ownerEmail = 'Wellington.Rodovalho@gmail.com';
+        ownerPhone = '(62) 99999-0001';
+        whatsapp = '(62) 99999-0001';
+      }
+
+      // Todos os imóveis possuem 1 quarto
       const typology: UnitTypology = '1 Quarto';
       const roomsCount = 1 as const;
 
-      // Distribuição de camas (número e tipos de camas)
+      // Distribuição de camas conforme planta e capacidade
       let bedsCount = 1;
       let bedTypes: Unit['bedTypes'] = [{ type: 'Cama Casal Queen', quantity: 1 }];
       let bedSummary = '1 Cama Queen';
       let capacity = 2;
-      let basePrice = 220; // Mínimo R$ 200,00 obrigatório
+      let basePrice = 220; // Mínimo R$ 200,00
 
-      if (count % 4 === 0) {
-        // 1 Queen + 1 Sofá-Cama Casal
+      if (isFinal3) {
+        // Unidade maior (35m²) acomoda confortavelmente 1 Queen + 1 Sofá-Cama
         bedsCount = 2;
         bedTypes = [
           { type: 'Cama Casal Queen', quantity: 1 },
@@ -89,9 +127,8 @@ export function generate302Units(): Unit[] {
         ];
         bedSummary = '1 Cama Queen + 1 Sofá-Cama';
         capacity = 4;
-        basePrice = 280;
-      } else if (count % 4 === 1) {
-        // 1 Cama Casal Padrão + 1 Bicama Solteiro
+        basePrice = 260;
+      } else if (counter % 3 === 0) {
         bedsCount = 2;
         bedTypes = [
           { type: 'Cama Casal Padrão', quantity: 1 },
@@ -100,44 +137,37 @@ export function generate302Units(): Unit[] {
         bedSummary = '1 Cama Casal + 1 Bicama Solteiro';
         capacity = 3;
         basePrice = 240;
-      } else if (count % 4 === 2) {
-        // 2 Camas Solteiro + 1 Sofá-Cama
-        bedsCount = 3;
+      } else if (counter % 3 === 1) {
+        bedsCount = 2;
         bedTypes = [
           { type: 'Cama Solteiro', quantity: 2 },
-          { type: 'Sofá-Cama Casal', quantity: 1 },
         ];
-        bedSummary = '2 Camas Solteiro + 1 Sofá-Cama';
-        capacity = 4;
-        basePrice = 260;
+        bedSummary = '2 Camas Solteiro';
+        capacity = 2;
+        basePrice = 210;
       } else {
-        // 1 Cama Casal Queen Luxo
         bedsCount = 1;
         bedTypes = [{ type: 'Cama Casal Queen', quantity: 1 }];
         bedSummary = '1 Cama Casal Queen';
         capacity = 2;
-        basePrice = 210;
+        basePrice = 220;
       }
 
-      // Andares altos têm vista privilegiada (preço balcão maior, sempre >= 200)
+      // Andares altos (>= 20) contam com vista panorâmica da cidade
       if (floor >= 20) {
-        basePrice += 60;
+        basePrice += 40;
       }
 
-      // Administrative status: all units start eligible by default in clean state
       const isEligibleByAdmin = true;
-      const ineligibleReason = undefined;
-
-      // Host availability: starts FALSE (0 hosts in queue) until an accredited host enables availability
-      const isAvailableByHost = false;
-
-      const photoUrl = UNIT_PHOTOS[count % UNIT_PHOTOS.length];
+      const isAvailableByHost = false; // Começa pausado até o anfitrião/co-anfitrião ativar
+      const photoUrl = UNIT_PHOTOS[counter % UNIT_PHOTOS.length];
 
       units.push({
         id: `unit-${unitNumber}`,
         unitNumber,
         block,
         floor,
+        area,
         roomsCount,
         typology,
         bedsCount,
@@ -147,19 +177,33 @@ export function generate302Units(): Unit[] {
         basePrice,
         cleaningFee: 80,
         ownerName,
+        managerName,
+        managementType,
+        managementRoleTitle,
         ownerEmail,
         ownerPhone,
         whatsapp,
         isEligibleByAdmin,
-        ineligibleReason,
         isAvailableByHost,
         queuePosition: 9999,
         totalBookingsCompleted: 0,
         totalCallsReceived: 0,
         totalRejections: 0,
         totalTimeouts: 0,
-        amenities: ['Wi-Fi 500Mbps', 'Ar Condicionado Dual Inverter', 'Smart TV 55"', 'Cozinha Completa', 'Garagem Coberta'],
-        houseRules: ['Não fumante', 'Silêncio após 22h', 'Proibido festas e eventos'],
+        amenities: [
+          'Wi-Fi 500Mbps', 
+          'Ar Condicionado Dual Inverter', 
+          'Smart TV 55"', 
+          'Cozinha Completa', 
+          'Garagem Coberta', 
+          'Piscina & Sauna'
+        ],
+        houseRules: [
+          'Não fumante', 
+          'Silêncio após 22h', 
+          'Proibido festas e eventos', 
+          'Check-in facilitado 24h na recepção'
+        ],
         photoUrl,
       });
     }
@@ -168,12 +212,16 @@ export function generate302Units(): Unit[] {
   return units;
 }
 
+// Backward compatibility alias
+export const generate302Units = generateCrystalPlaceUnits;
+
 export function getDefaultConfig(): SystemConfig {
   return {
     complexName: 'Crystal Place Residence',
-    totalUnitsCount: 302,
+    totalFloors: 25,
+    unitsPerFloor: 13,
     timeoutMinutes: 5,
-    demoFastTimeoutSeconds: 45, // optional fast mode toggle for easy demo
+    demoFastTimeoutSeconds: 45,
     allowPetFilter: true,
     autoReassignOnTimeout: true,
     requireDocumentPhoto: true,
@@ -186,27 +234,29 @@ export function loadUnits(): Unit[] {
     const raw = localStorage.getItem(STORAGE_KEYS.UNITS);
     if (raw) {
       const parsed: Unit[] = JSON.parse(raw);
-      // Ensure data conforms to constraints: minimum R$ 200 and bed configuration
-      const sanitized = parsed.map((u, idx) => ({
-        ...u,
-        block: 'Torre Única' as const,
-        roomsCount: 1 as const,
-        typology: '1 Quarto' as const,
-        basePrice: Math.max(200, u.basePrice || 200),
-        whatsapp: u.whatsapp || u.ownerPhone || '(62) 99999-0001',
-        bedsCount: u.bedsCount || (idx % 2 === 0 ? 2 : 1),
-        bedSummary: u.bedSummary || (idx % 2 === 0 ? '1 Cama Queen + 1 Sofá-Cama' : '1 Cama Casal Queen'),
-        bedTypes: u.bedTypes && u.bedTypes.length > 0 ? u.bedTypes : [
-          { type: 'Cama Casal Queen' as const, quantity: 1 },
-          ...(idx % 2 === 0 ? [{ type: 'Sofá-Cama Casal' as const, quantity: 1 }] : []),
-        ],
-      }));
-      return sanitized;
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].floor !== undefined) {
+        return parsed.map((u, idx) => {
+          const uNum = parseInt(u.unitNumber.slice(-2), 10);
+          const isFinal3 = uNum === 3 || u.unitNumber.endsWith('03');
+          const area = u.area || (isFinal3 ? 35 : 33);
+          return {
+            ...u,
+            area,
+            block: 'Torre Única' as const,
+            roomsCount: 1 as const,
+            typology: '1 Quarto' as const,
+            basePrice: Math.max(200, u.basePrice || 200),
+            whatsapp: u.whatsapp || u.ownerPhone || '(62) 99999-0001',
+            bedsCount: u.bedsCount || (idx % 2 === 0 ? 2 : 1),
+            bedSummary: u.bedSummary || (idx % 2 === 0 ? '1 Cama Queen + 1 Sofá-Cama' : '1 Cama Casal Queen'),
+          };
+        });
+      }
     }
   } catch (e) {
     console.error('Failed to load units from storage', e);
   }
-  const initial = generate302Units();
+  const initial = generateCrystalPlaceUnits();
   saveUnits(initial);
   return initial;
 }
@@ -236,7 +286,6 @@ export function loadRequests(): GuestRequest[] {
     console.error('Failed to load requests from storage', e);
   }
 
-  // Clean test state: starts with 0 requests
   const initial: GuestRequest[] = [];
   saveRequests(initial);
   return initial;
@@ -261,7 +310,7 @@ export function loadAuditLogs(): AuditLog[] {
     createAuditEntry(
       'SYSTEM_INITIALIZED',
       'Síndico/Admin',
-      'Sistema PROXIMO inicializado no Crystal Place Residence. Fila virtual neutra e transparente ativa.'
+      'Sistema PROXIMO inicializado no Crystal Place Residence (25 andares, 13 unidades por andar). Fila virtual neutra e transparente ativa.'
     ),
   ];
   saveAuditLogs(initial);
@@ -282,17 +331,17 @@ export function clearAllTestData(): void {
     localStorage.removeItem(STORAGE_KEYS.REQUESTS);
     localStorage.removeItem(STORAGE_KEYS.AUDIT);
     localStorage.removeItem(STORAGE_KEYS.CONFIG);
-    localStorage.removeItem('proximo_access_accounts_v3_clean');
+    localStorage.removeItem('proximo_access_accounts_crystal_v4');
     localStorage.removeItem('proximo_auth_session');
     sessionStorage.clear();
-    const freshUnits = generate302Units();
+    const freshUnits = generateCrystalPlaceUnits();
     saveUnits(freshUnits);
     saveRequests([]);
     saveAuditLogs([
       createAuditEntry(
         'SYSTEM_INITIALIZED',
         'Síndico/Admin',
-        'Sistema limpo e inicializado no Crystal Place Residence. Nenhuma solicitação pendente.'
+        'Sistema limpo e inicializado no Crystal Place Residence (25 andares, 13 unidades por andar). Nenhuma solicitação pendente.'
       ),
     ]);
   } catch (e) {
@@ -305,10 +354,9 @@ export function loadConfig(): SystemConfig {
     const raw = localStorage.getItem(STORAGE_KEYS.CONFIG);
     if (raw) {
       const parsed: SystemConfig = JSON.parse(raw);
-      if (parsed.complexName !== 'Crystal Place Residence') {
-        parsed.complexName = 'Crystal Place Residence';
-        saveConfig(parsed);
-      }
+      parsed.complexName = 'Crystal Place Residence';
+      parsed.totalFloors = 25;
+      parsed.unitsPerFloor = 13;
       return parsed;
     }
   } catch (e) {
@@ -328,7 +376,7 @@ export function saveConfig(config: SystemConfig): void {
 }
 
 export function getSelectedHostUnitId(): string {
-  return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_HOST_UNIT) || 'unit-302';
+  return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_HOST_UNIT) || 'unit-1609';
 }
 
 export function setSelectedHostUnitId(unitId: string): void {

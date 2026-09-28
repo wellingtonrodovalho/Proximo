@@ -2,12 +2,10 @@ import { jsPDF } from 'jspdf';
 
 export interface ManualPdfOptions {
   condoName?: string;
-  totalUnits?: number;
 }
 
 export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
   const condoName = options.condoName || 'Crystal Place Residence';
-  const totalUnits = options.totalUnits || 302;
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -33,7 +31,7 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
-    doc.text(`${condoName} (${totalUnits} Unidades)`, pageWidth - margin, 8, { align: 'right' });
+    doc.text(`${condoName} • 25 Andares`, pageWidth - margin, 8, { align: 'right' });
 
     // Footer line
     doc.setDrawColor(226, 232, 240);
@@ -105,10 +103,10 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
   cursorY += 6;
 
   const sectionsIndex = [
-    { title: '1. NÍVEL 1: GUIA PRÁTICO DO ANFITRIÃO (PROPRIETÁRIO)', desc: 'Cadastro simples, regras da fila virtual, aceite de chamados e SLA' },
+    { title: '1. NÍVEL 1: GUIA PRÁTICO DO ANFITRIÃO OU CO-ANFITRIÃO', desc: 'Cadastro simples, gestão por proprietário ou administrador, regras da fila virtual e aceite' },
     { title: '2. NÍVEL 2: GUIA OPERACIONAL DA RECEPÇÃO & PORTARIA 24H', desc: 'Atendimento do hóspede, conferência de documentos e entrega de chaves' },
-    { title: '3. NÍVEL 3: GUIA DE GESTÃO DO ADMINISTRADOR / SÍNDICO', desc: 'Validação de cadastros, controle das 302 unidades, bloqueios e auditoria' },
-    { title: '4. REGRAS GERAIS, POLÍTICA DE DIÁRIA E DISPOSIÇÕES FINAIS', desc: 'Piso mínimo de R$ 200, integridade do sorteio e compliance' },
+    { title: '3. NÍVEL 3: GUIA DE GESTÃO DO ADMINISTRADOR / SÍNDICO', desc: 'Validação de cadastros, controle dos 25 andares, bloqueios e auditoria' },
+    { title: '4. REGRAS GERAIS, POLÍTICA DE DIÁRIA E DISPOSIÇÕES FINAIS', desc: 'Piso mínimo de R$ 200, tipologia (35m² final 3, 33m² demais) e integridade do sorteio' },
   ];
 
   sectionsIndex.forEach((sec, idx) => {
@@ -269,7 +267,7 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
         '• O botão "Avisar no WhatsApp" envia mensagem pronta ao condômino confirmando a liberação.'
     },
     {
-      title: 'B. Controle de Elegibilidade e Bloqueio Administrativo das 302 Unidades:',
+      title: 'B. Controle de Elegibilidade e Bloqueio Administrativo das Unidades:',
       content:
         '• O Síndico tem autoridade para inativar uma unidade da fila por motivos formais (inadimplência condominial, reformas, infrações de convivência ou descumprimento de regras).\n' +
         '• Ao inativar, é obrigatório registrar a justificativa no sistema (ex: "Débito condominial em aberto", "Manutenção na rede hidráulica").\n' +

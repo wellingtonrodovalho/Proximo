@@ -6,6 +6,7 @@
 export type UserRole = 'guest' | 'host' | 'reception' | 'admin';
 export type AccessRole = 'host' | 'reception' | 'admin';
 export type AccessStatus = 'pending' | 'approved' | 'rejected';
+export type ManagementType = 'anfitriao' | 'co_anfitriao';
 
 export interface AccessAccount {
   id: string;
@@ -13,7 +14,9 @@ export interface AccessAccount {
   email: string;
   phone: string;
   role: AccessRole;
+  managementType?: ManagementType; // Anfitrião (Proprietário) ou Co-Anfitrião (Administrador)
   unitNumber?: string;
+  managedUnits?: string[]; // Multiple units managed by the same person
   status: AccessStatus;
   requestedAt: string;
   approvedAt?: string;
@@ -25,6 +28,8 @@ export interface AuthSession {
   accountId?: string;
   unitId?: string;
   unitNumber?: string;
+  managedUnits?: string[];
+  managementType?: ManagementType;
   userName: string;
   userEmail: string;
   userPhone: string;
@@ -33,7 +38,7 @@ export interface AuthSession {
 
 const STORAGE_KEYS = {
   SESSION: 'proximo_auth_session',
-  ACCOUNTS: 'proximo_access_accounts_v3_clean',
+  ACCOUNTS: 'proximo_access_accounts_crystal_v5',
 };
 
 // Purge old account cache to guarantee clean state
@@ -42,25 +47,72 @@ if (typeof window !== 'undefined') {
     localStorage.removeItem('proximo_access_accounts_v1');
     localStorage.removeItem('proximo_access_accounts_clean_v1');
     localStorage.removeItem('proximo_access_accounts_pristine_v2');
+    localStorage.removeItem('proximo_access_accounts_v3_clean');
+    localStorage.removeItem('proximo_access_accounts_crystal_v4');
   } catch (e) {
     // Ignore restricted storage contexts
   }
 }
 
-// Seed master admin account who is also Host of Unit 302
+// Seed master accounts:
+// Wellington Rodovalho:
+// - Administrador Geral
+// - Proprietário da unidade 1609 no 16º andar (Anfitrião)
+// - Administra a Unidade 1701 no 17º andar (Co-Anfitrião / Administrador)
 export const INITIAL_ACCOUNTS: AccessAccount[] = [
   {
     id: 'acc-admin',
-    name: 'Wellington Rodovalho (Síndico/Admin & Anfitrião)',
+    name: 'Wellington Rodovalho',
     email: 'Wellington.Rodovalho@gmail.com',
     phone: '(62) 99999-0001',
     role: 'admin',
-    unitNumber: '302',
+    managementType: 'anfitriao',
+    unitNumber: '1609',
+    managedUnits: ['1609', '1701'],
     status: 'approved',
     requestedAt: new Date().toISOString(),
     approvedAt: new Date().toISOString(),
     approvedBy: 'Sistema Master',
   },
+  {
+    id: 'acc-host-1609',
+    name: 'Wellington Rodovalho (Proprietário)',
+    email: 'wellington.1609@crystalplace.com',
+    phone: '(62) 99999-1609',
+    role: 'host',
+    managementType: 'anfitriao',
+    unitNumber: '1609',
+    managedUnits: ['1609'],
+    status: 'approved',
+    requestedAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
+    approvedBy: 'Wellington Rodovalho',
+  },
+  {
+    id: 'acc-host-1701',
+    name: 'Wellington Rodovalho (Co-Anfitrião)',
+    email: 'wellington.1701@crystalplace.com',
+    phone: '(62) 99999-1701',
+    role: 'host',
+    managementType: 'co_anfitriao',
+    unitNumber: '1701',
+    managedUnits: ['1701'],
+    status: 'approved',
+    requestedAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
+    approvedBy: 'Wellington Rodovalho',
+  },
+  {
+    id: 'acc-reception',
+    name: 'Portaria & Balcão 24h',
+    email: 'portaria@crystalplace.com',
+    phone: '(62) 3000-0000',
+    role: 'reception',
+    status: 'approved',
+    requestedAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
+    approvedBy: 'Wellington Rodovalho',
+  }
 ];
 
 export function loadAccessAccounts(): AccessAccount[] {

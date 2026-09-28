@@ -45,6 +45,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<AccessRole>(initialRole);
+  const [managementType, setManagementType] = useState<'anfitriao' | 'co_anfitriao'>('anfitriao');
   const [unitNumber, setUnitNumber] = useState('');
 
   // Login Form
@@ -96,6 +97,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
       email: cleanEmail,
       phone: cleanPhone,
       role,
+      managementType: role === 'host' ? managementType : undefined,
       unitNumber: role === 'host' ? unitNumber.trim() : undefined,
     });
 
@@ -357,11 +359,47 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
               </div>
             </div>
 
+            {/* If Host: Choose Management Role (Anfitrião ou Co-Anfitrião) */}
+            {role === 'host' && (
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Tipo de Administração da Unidade
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setManagementType('anfitriao')}
+                    className={`p-2 rounded-lg text-xs font-bold border transition-all text-center ${
+                      managementType === 'anfitriao'
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-300'
+                        : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Anfitrião (Proprietário)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManagementType('co_anfitriao')}
+                    className={`p-2 rounded-lg text-xs font-bold border transition-all text-center ${
+                      managementType === 'co_anfitriao'
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-300'
+                        : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Co-Anfitrião (Administrador)
+                  </button>
+                </div>
+                <span className="text-[10px] text-slate-500 block">
+                  As unidades do Crystal Place podem ser geridas diretamente pelo Proprietário ou por Administrador/Co-Anfitrião.
+                </span>
+              </div>
+            )}
+
             {/* If Host OR Admin: Optional Apartment Number */}
             {(role === 'host' || role === 'admin') && (
               <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
                 <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
-                  <span>Número do Apartamento na Torre Única</span>
+                  <span>Número do Apartamento (Crystal Place)</span>
                   {role === 'admin' && (
                     <span className="text-[10px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                       O Admin também pode ser Anfitrião
@@ -373,13 +411,13 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
                   required={role === 'host'}
                   value={unitNumber}
                   onChange={(e) => setUnitNumber(e.target.value)}
-                  placeholder={role === 'admin' ? "Ex: 302 (opcional se for também anfitrião)" : "Ex: 101, 204, 302..."}
+                  placeholder={role === 'admin' ? "Ex: 1609 (opcional se for também anfitrião)" : "Ex: 1609, 1701, 103..."}
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 font-mono focus:outline-none focus:border-amber-500"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
                   {role === 'admin' 
-                    ? 'Como Administrador, se você possui apartamento no condomínio, informe-o para participar também como anfitrião.' 
-                    : 'Informe a unidade que você administra no condomínio.'}
+                    ? 'Como Administrador, se você possui ou administra unidades no condomínio (ex: 1609, 1701), informe para participar também como anfitrião.' 
+                    : 'Crystal Place tem 25 andares com 13 unidades por andar (unidades final 3 têm 35m² e demais têm 33m²).'}
                 </span>
               </div>
             )}
@@ -452,7 +490,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
                         )}
                       </div>
                       <div className="text-[10px] text-slate-400 truncate">
-                        {acc.role === 'admin' ? 'Administrador / Síndico' : acc.role === 'reception' ? 'Portaria 24h' : 'Anfitrião'} • {acc.email}
+                        {acc.role === 'admin' ? 'Administrador / Síndico' : acc.role === 'reception' ? 'Portaria 24h' : acc.managementType === 'co_anfitriao' ? 'Co-Anfitrião (Administrador)' : 'Anfitrião (Proprietário)'} • {acc.email}
                       </div>
                     </div>
 
