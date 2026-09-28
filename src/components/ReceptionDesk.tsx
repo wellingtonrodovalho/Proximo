@@ -31,6 +31,8 @@ interface ReceptionDeskProps {
     guestPhone: string;
     guestsCount: number;
     nightsCount: number;
+    checkInDate?: string;
+    checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
   }) => void;
@@ -59,6 +61,44 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
   const [manualPhone, setManualPhone] = useState('');
   const [manualGuests, setManualGuests] = useState(2);
   const [manualNights, setManualNights] = useState(2);
+  const [manualCheckIn, setManualCheckIn] = useState(() => new Date().toISOString().split('T')[0]);
+  const [manualCheckOut, setManualCheckOut] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().split('T')[0];
+  });
+
+  const handleManualCheckInChange = (val: string) => {
+    setManualCheckIn(val);
+    if (!manualCheckOut || manualCheckOut <= val) {
+      const next = new Date(val + 'T00:00:00');
+      next.setDate(next.getDate() + (manualNights || 1));
+      setManualCheckOut(next.toISOString().split('T')[0]);
+    } else {
+      const diff = Math.max(1, Math.round((new Date(manualCheckOut + 'T00:00:00').getTime() - new Date(val + 'T00:00:00').getTime()) / 86400000));
+      setManualNights(diff);
+    }
+  };
+
+  const handleManualCheckOutChange = (val: string) => {
+    if (val <= manualCheckIn) {
+      const next = new Date(manualCheckIn + 'T00:00:00');
+      next.setDate(next.getDate() + 1);
+      setManualCheckOut(next.toISOString().split('T')[0]);
+      setManualNights(1);
+      return;
+    }
+    setManualCheckOut(val);
+    const diff = Math.max(1, Math.round((new Date(val + 'T00:00:00').getTime() - new Date(manualCheckIn + 'T00:00:00').getTime()) / 86400000));
+    setManualNights(diff);
+  };
+
+  const handleManualNightsChange = (n: number) => {
+    setManualNights(n);
+    const next = new Date(manualCheckIn + 'T00:00:00');
+    next.setDate(next.getDate() + n);
+    setManualCheckOut(next.toISOString().split('T')[0]);
+  };
 
   const filteredRequests = requests.filter(r => 
     r.guestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,6 +131,8 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
       guestPhone: manualPhone || '(Balcão Portaria)',
       guestsCount: manualGuests,
       nightsCount: manualNights,
+      checkInDate: manualCheckIn,
+      checkOutDate: manualCheckOut,
       typologyPreferred: 'Qualquer',
       petFriendly: false,
     });
@@ -459,6 +501,35 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
                 </div>
               </div>
 
+              {/* Check-in and Check-out Date Pickers */}
+              <div className="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Entrada (Check-in) *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={manualCheckIn}
+                    onChange={(e) => handleManualCheckInChange(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-amber-500 [color-scheme:dark]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Saída (Check-out) *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={manualCheckOut}
+                    min={manualCheckIn}
+                    onChange={(e) => handleManualCheckOutChange(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-amber-500 [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 mb-1">Pessoas</label>
@@ -473,10 +544,12 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">Noites</label>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    Noites ({manualNights} diárias)
+                  </label>
                   <select
                     value={manualNights}
-                    onChange={(e) => setManualNights(Number(e.target.value))}
+                    onChange={(e) => handleManualNightsChange(Number(e.target.value))}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
                   >
                     {[1, 2, 3, 4, 5, 7, 10].map(n => (

@@ -11,6 +11,8 @@ interface SimulateGuestModalProps {
     guestPhone: string;
     guestsCount: number;
     nightsCount: number;
+    checkInDate?: string;
+    checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
   }) => void;
@@ -34,12 +36,17 @@ export const SimulateGuestModal: React.FC<SimulateGuestModalProps> = ({
   const current = PRESET_GUESTS[selectedPreset];
 
   const handleRun = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const checkOut = new Date(Date.now() + current.nights * 86400000).toISOString().split('T')[0];
+
     onSimulateGuest({
       guestName: current.name,
       guestDocument: current.doc,
       guestPhone: current.phone,
       guestsCount: current.guests,
       nightsCount: current.nights,
+      checkInDate: today,
+      checkOutDate: checkOut,
       typologyPreferred: current.type,
       petFriendly: false,
     });

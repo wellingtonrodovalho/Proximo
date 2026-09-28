@@ -2,11 +2,11 @@ import { Unit, UnitTypology, UnitBlock, GuestRequest, AuditLog, SystemConfig } f
 import { createAuditEntry } from './audit';
 
 const STORAGE_KEYS = {
-  UNITS: 'crystal_units_v4',
-  REQUESTS: 'crystal_requests_v4',
-  AUDIT: 'crystal_audit_v4',
-  CONFIG: 'crystal_config_v4',
-  CURRENT_USER_HOST_UNIT: 'crystal_current_host_unit_v4',
+  UNITS: 'crystal_units_v5',
+  REQUESTS: 'crystal_requests_v5',
+  AUDIT: 'crystal_audit_v5',
+  CONFIG: 'crystal_config_v5',
+  CURRENT_USER_HOST_UNIT: 'crystal_current_host_unit_v5',
 };
 
 // Purge legacy cache from browser localStorage to ensure Crystal Place layout loads immediately
@@ -34,6 +34,11 @@ if (typeof window !== 'undefined') {
       'rotativo302_config_v3_clean',
       'rotativo302_current_host_unit',
       'proximo_access_accounts_v3_clean',
+      'crystal_units_v4',
+      'crystal_requests_v4',
+      'crystal_audit_v4',
+      'crystal_config_v4',
+      'crystal_current_host_unit_v4',
     ].forEach(k => {
       localStorage.removeItem(k);
     });
@@ -51,15 +56,160 @@ const UNIT_PHOTOS: string[] = [
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
 ];
 
+// Active pool hosts seeded to guarantee immediate availability for demo & testing
+interface SeedHostConfig {
+  ownerName: string;
+  managerName?: string;
+  managementType: 'anfitriao' | 'co_anfitriao';
+  managementRoleTitle: string;
+  ownerEmail: string;
+  ownerPhone: string;
+  whatsapp: string;
+  queuePosition: number;
+}
+
+const SEED_ACTIVE_HOSTS: Record<string, SeedHostConfig> = {
+  // 1º da fila: Wellington Rodovalho - Proprietário da unidade 1609 (16º andar)
+  '1609': {
+    ownerName: 'Wellington Rodovalho',
+    managerName: 'Wellington Rodovalho',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'Wellington.Rodovalho@gmail.com',
+    ownerPhone: '(62) 99999-0001',
+    whatsapp: '(62) 99999-0001',
+    queuePosition: 1,
+  },
+  // 2º da fila: Wellington Rodovalho - Administra (Co-Anfitrião) a Unidade 1701 (17º andar)
+  '1701': {
+    ownerName: 'Proprietário Unidade 1701',
+    managerName: 'Wellington Rodovalho',
+    managementType: 'co_anfitriao',
+    managementRoleTitle: 'Co-Anfitrião (Administrador)',
+    ownerEmail: 'Wellington.Rodovalho@gmail.com',
+    ownerPhone: '(62) 99999-0001',
+    whatsapp: '(62) 99999-0001',
+    queuePosition: 2,
+  },
+  '103': {
+    ownerName: 'Dra. Mariana Castro',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'mariana.castro@crystalplace.com',
+    ownerPhone: '(62) 99911-1003',
+    whatsapp: '(62) 99911-1003',
+    queuePosition: 3,
+  },
+  '201': {
+    ownerName: 'Carlos Eduardo Mendes',
+    managementType: 'co_anfitriao',
+    managementRoleTitle: 'Co-Anfitrião (Administrador)',
+    ownerEmail: 'carlos.mendes@crystalplace.com',
+    ownerPhone: '(62) 99922-2001',
+    whatsapp: '(62) 99922-2001',
+    queuePosition: 4,
+  },
+  '303': {
+    ownerName: 'Roberto Farias',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'roberto.farias@crystalplace.com',
+    ownerPhone: '(62) 99933-3003',
+    whatsapp: '(62) 99933-3003',
+    queuePosition: 5,
+  },
+  '502': {
+    ownerName: 'Juliana Paes de Barros',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'juliana.paes@crystalplace.com',
+    ownerPhone: '(62) 99955-5002',
+    whatsapp: '(62) 99955-5002',
+    queuePosition: 6,
+  },
+  '703': {
+    ownerName: 'Fernando Albuquerque',
+    managementType: 'co_anfitriao',
+    managementRoleTitle: 'Co-Anfitrião (Administrador)',
+    ownerEmail: 'fernando.albuquerque@crystalplace.com',
+    ownerPhone: '(62) 99977-7003',
+    whatsapp: '(62) 99977-7003',
+    queuePosition: 7,
+  },
+  '901': {
+    ownerName: 'Patrícia Nogueira',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'patricia.nogueira@crystalplace.com',
+    ownerPhone: '(62) 99999-9001',
+    whatsapp: '(62) 99999-9001',
+    queuePosition: 8,
+  },
+  '1203': {
+    ownerName: 'Lucas Vasconcelos',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'lucas.vasconcelos@crystalplace.com',
+    ownerPhone: '(62) 99912-1203',
+    whatsapp: '(62) 99912-1203',
+    queuePosition: 9,
+  },
+  '1402': {
+    ownerName: 'Beatriz Vasques',
+    managementType: 'co_anfitriao',
+    managementRoleTitle: 'Co-Anfitrião (Administrador)',
+    ownerEmail: 'beatriz.vasques@crystalplace.com',
+    ownerPhone: '(62) 99914-1402',
+    whatsapp: '(62) 99914-1402',
+    queuePosition: 10,
+  },
+  '1803': {
+    ownerName: 'Guilherme Siqueira',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'guilherme.siqueira@crystalplace.com',
+    ownerPhone: '(62) 99918-1803',
+    whatsapp: '(62) 99918-1803',
+    queuePosition: 11,
+  },
+  '2001': {
+    ownerName: 'Camila Drummond',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'camila.drummond@crystalplace.com',
+    ownerPhone: '(62) 99920-2001',
+    whatsapp: '(62) 99920-2001',
+    queuePosition: 12,
+  },
+  '2203': {
+    ownerName: 'Thiago Esteves',
+    managementType: 'co_anfitriao',
+    managementRoleTitle: 'Co-Anfitrião (Administrador)',
+    ownerEmail: 'thiago.esteves@crystalplace.com',
+    ownerPhone: '(62) 99922-2203',
+    whatsapp: '(62) 99922-2203',
+    queuePosition: 13,
+  },
+  '2501': {
+    ownerName: 'Daniela Meirelles',
+    managementType: 'anfitriao',
+    managementRoleTitle: 'Anfitrião (Proprietário)',
+    ownerEmail: 'daniela.meirelles@crystalplace.com',
+    ownerPhone: '(62) 99925-2501',
+    whatsapp: '(62) 99925-2501',
+    queuePosition: 14,
+  },
+};
+
 /**
  * Generates all units of Crystal Place Residence:
  * - 25 andares (1º ao 25º)
  * - 13 unidades por andar (01 a 13)
  * - Unidades final 3 possuem 35 m²
  * - Demais unidades possuem 33 m²
- * - Unidade 1609: Proprietário Wellington Rodovalho (Anfitrião)
- * - Unidade 1701: Co-Anfitrião (Administrador) Wellington Rodovalho
- * - As demais unidades iniciam limpas aguardando credenciamento de Anfitrião ou Co-Anfitrião.
+ * - Unidade 1609: Proprietário Wellington Rodovalho (Anfitrião) - Fila #1 (Ativo)
+ * - Unidade 1701: Co-Anfitrião (Administrador) Wellington Rodovalho - Fila #2 (Ativo)
+ * - Fila com anfitriões participantes ativos para atendimento imediato de balcão
  */
 export function generateCrystalPlaceUnits(): Unit[] {
   const units: Unit[] = [];
@@ -75,51 +225,33 @@ export function generateCrystalPlaceUnits(): Unit[] {
       const isFinal3 = u === 3;
       const area = isFinal3 ? 35 : 33;
 
-      // Wellington Rodovalho:
-      // Proprietário da unidade 1609 no 16º andar
-      // Administra (Co-Anfitrião) a Unidade 1701 no 17º andar
+      const seedHost = SEED_ACTIVE_HOSTS[unitNumber];
       const isWellington1609 = unitNumber === '1609';
       const isWellington1701 = unitNumber === '1701';
 
-      let ownerName = '';
-      let managerName: string | undefined = undefined;
-      let managementType: Unit['managementType'] = undefined;
-      let managementRoleTitle: string | undefined = undefined;
-      let ownerEmail = '';
-      let ownerPhone = '';
-      let whatsapp = '';
-
-      if (isWellington1609) {
-        ownerName = 'Wellington Rodovalho';
-        managerName = 'Wellington Rodovalho';
-        managementType = 'anfitriao';
-        managementRoleTitle = 'Anfitrião (Proprietário)';
-        ownerEmail = 'Wellington.Rodovalho@gmail.com';
-        ownerPhone = '(62) 99999-0001';
-        whatsapp = '(62) 99999-0001';
-      } else if (isWellington1701) {
-        ownerName = 'Proprietário Unidade 1701';
-        managerName = 'Wellington Rodovalho';
-        managementType = 'co_anfitriao';
-        managementRoleTitle = 'Co-Anfitrião (Administrador)';
-        ownerEmail = 'Wellington.Rodovalho@gmail.com';
-        ownerPhone = '(62) 99999-0001';
-        whatsapp = '(62) 99999-0001';
-      }
+      let ownerName = seedHost ? seedHost.ownerName : '';
+      let managerName = seedHost ? seedHost.managerName : undefined;
+      let managementType = seedHost ? seedHost.managementType : undefined;
+      let managementRoleTitle = seedHost ? seedHost.managementRoleTitle : undefined;
+      let ownerEmail = seedHost ? seedHost.ownerEmail : '';
+      let ownerPhone = seedHost ? seedHost.ownerPhone : '';
+      let whatsapp = seedHost ? seedHost.whatsapp : '';
+      const isAvailableByHost = Boolean(seedHost);
+      const queuePosition = seedHost ? seedHost.queuePosition : 9999;
 
       // Todos os imóveis possuem 1 quarto
       const typology: UnitTypology = '1 Quarto';
       const roomsCount = 1 as const;
 
       // Distribuição de camas conforme planta e capacidade
+      // Unidades Wellington comportam até 4 pessoas (1 Queen + 1 Sofá-Cama)
       let bedsCount = 1;
       let bedTypes: Unit['bedTypes'] = [{ type: 'Cama Casal Queen', quantity: 1 }];
       let bedSummary = '1 Cama Queen';
       let capacity = 2;
       let basePrice = 220; // Mínimo R$ 200,00
 
-      if (isFinal3) {
-        // Unidade maior (35m²) acomoda confortavelmente 1 Queen + 1 Sofá-Cama
+      if (isWellington1609 || isWellington1701 || isFinal3) {
         bedsCount = 2;
         bedTypes = [
           { type: 'Cama Casal Queen', quantity: 1 },
@@ -127,7 +259,7 @@ export function generateCrystalPlaceUnits(): Unit[] {
         ];
         bedSummary = '1 Cama Queen + 1 Sofá-Cama';
         capacity = 4;
-        basePrice = 260;
+        basePrice = isFinal3 ? 260 : 230;
       } else if (counter % 3 === 0) {
         bedsCount = 2;
         bedTypes = [
@@ -159,7 +291,6 @@ export function generateCrystalPlaceUnits(): Unit[] {
       }
 
       const isEligibleByAdmin = true;
-      const isAvailableByHost = false; // Começa pausado até o anfitrião/co-anfitrião ativar
       const photoUrl = UNIT_PHOTOS[counter % UNIT_PHOTOS.length];
 
       units.push({
@@ -185,7 +316,7 @@ export function generateCrystalPlaceUnits(): Unit[] {
         whatsapp,
         isEligibleByAdmin,
         isAvailableByHost,
-        queuePosition: 9999,
+        queuePosition,
         totalBookingsCompleted: 0,
         totalCallsReceived: 0,
         totalRejections: 0,
@@ -235,6 +366,15 @@ export function loadUnits(): Unit[] {
     if (raw) {
       const parsed: Unit[] = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].floor !== undefined) {
+        const activeCount = parsed.filter(u => u.isEligibleByAdmin && u.isAvailableByHost).length;
+        
+        // If loaded data has no active units or missing Wellington setup, self-heal
+        if (activeCount === 0 || !parsed.some(u => u.unitNumber === '1609' && u.isAvailableByHost)) {
+          const fresh = generateCrystalPlaceUnits();
+          saveUnits(fresh);
+          return fresh;
+        }
+
         return parsed.map((u, idx) => {
           const uNum = parseInt(u.unitNumber.slice(-2), 10);
           const isFinal3 = uNum === 3 || u.unitNumber.endsWith('03');
@@ -276,7 +416,7 @@ export function loadRequests(): GuestRequest[] {
       const parsed: GuestRequest[] = JSON.parse(raw);
       return parsed.map(r => ({
         ...r,
-        estimatedWaitMinutes: r.estimatedWaitMinutes || 3,
+        estimatedWaitMinutes: r.estimatedWaitMinutes || 5,
         queuePositionAtEntry: r.queuePositionAtEntry || 1,
         deviceNotified: r.deviceNotified ?? true,
         assignedUnitBedSummary: r.assignedUnitBedSummary || '1 Cama Casal Queen',
@@ -310,7 +450,7 @@ export function loadAuditLogs(): AuditLog[] {
     createAuditEntry(
       'SYSTEM_INITIALIZED',
       'Síndico/Admin',
-      'Sistema PROXIMO inicializado no Crystal Place Residence (25 andares, 13 unidades por andar). Fila virtual neutra e transparente ativa.'
+      'Sistema PROXIMO inicializado no Crystal Place Residence (25 andares, 13 unidades por andar). Fila virtual neutra e transparente ativa com unidades 1609 (Anfitrião) e 1701 (Co-Anfitrião).'
     ),
   ];
   saveAuditLogs(initial);
@@ -331,7 +471,7 @@ export function clearAllTestData(): void {
     localStorage.removeItem(STORAGE_KEYS.REQUESTS);
     localStorage.removeItem(STORAGE_KEYS.AUDIT);
     localStorage.removeItem(STORAGE_KEYS.CONFIG);
-    localStorage.removeItem('proximo_access_accounts_crystal_v4');
+    localStorage.removeItem('proximo_access_accounts_crystal_v5');
     localStorage.removeItem('proximo_auth_session');
     sessionStorage.clear();
     const freshUnits = generateCrystalPlaceUnits();
@@ -341,7 +481,7 @@ export function clearAllTestData(): void {
       createAuditEntry(
         'SYSTEM_INITIALIZED',
         'Síndico/Admin',
-        'Sistema limpo e inicializado no Crystal Place Residence (25 andares, 13 unidades por andar). Nenhuma solicitação pendente.'
+        'Sistema limpo e inicializado no Crystal Place Residence (25 andares, 13 unidades por andar). Fila ativa pronta para recebimento de hóspedes.'
       ),
     ]);
   } catch (e) {

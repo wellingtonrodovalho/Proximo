@@ -37,6 +37,8 @@ interface GuestTotemProps {
     guestPhone: string;
     guestsCount: number;
     nightsCount: number;
+    checkInDate?: string;
+    checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
   }) => void;
@@ -44,8 +46,38 @@ interface GuestTotemProps {
   onSimulateTimeout: (requestId: string) => void;
   onSimulateAccept: (requestId: string) => void;
   onSimulateReject: (requestId: string) => void;
+  onEnsureActiveUnits?: () => void;
   config: SystemConfig;
 }
+
+// Date helpers
+const getTodayStr = () => {
+  const d = new Date();
+  return d.toISOString().split('T')[0];
+};
+
+const getFutureDateStr = (days: number, fromDateStr?: string) => {
+  const base = fromDateStr ? new Date(fromDateStr + 'T00:00:00') : new Date();
+  base.setDate(base.getDate() + days);
+  return base.toISOString().split('T')[0];
+};
+
+const calculateDaysBetween = (startStr: string, endStr: string) => {
+  if (!startStr || !endStr) return 1;
+  const start = new Date(startStr + 'T00:00:00');
+  const end = new Date(endStr + 'T00:00:00');
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+  return Math.max(1, diffDays);
+};
+
+const formatDatePtBr = (dateStr?: string) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const [year, month, day] = parts;
+  return `${day}/${month}/${year}`;
+};
 
 export const GuestTotem: React.FC<GuestTotemProps> = ({
   units,
@@ -55,6 +87,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
   onSimulateTimeout,
   onSimulateAccept,
   onSimulateReject,
+  onEnsureActiveUnits,
   config,
 }) => {
   // Form State
@@ -63,12 +96,55 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
   const [guestPhone, setGuestPhone] = useState('');
   const [guestsCount, setGuestsCount] = useState<number>(2);
   const [nightsCount, setNightsCount] = useState<number>(2);
+  const [checkInDate, setCheckInDate] = useState<string>(() => getTodayStr());
+  const [checkOutDate, setCheckOutDate] = useState<string>(() => getFutureDateStr(2));
   const [bedPreference, setBedPreference] = useState<string>('Qualquer');
   const [petFriendly, setPetFriendly] = useState<boolean>(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Countdown timer state
   const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(0);
+
+  // Date change handlers
+  const handleCheckInChange = (newCheckIn: string) => {
+    setCheckInDate(newCheckIn);
+    if (!checkOutDate || checkOutDate <= newCheckIn) {
+      const newCheckOut = getFutureDateStr(nightsCount > 0 ? nightsCount : 1, newCheckIn);
+      setCheckOutDate(newCheckOut);
+    } else {
+      setNightsCount(calculateDaysBetween(newCheckIn, checkOutDate));
+    }
+  };
+
+  const handleCheckOutChange = (newCheckOut: string) => {
+    if (newCheckOut <= checkInDate) {
+      const validCheckOut = getFutureDateStr(1, checkInDate);
+      setCheckOutDate(validCheckOut);
+      setNightsCount(1);
+      return;
+    }
+    setCheckOutDate(newCheckOut);
+    setNightsCount(calculateDaysBetween(checkInDate, newCheckOut));
+  };
+
+  const handleNightsChange = (newNights: number) => {
+    setNightsCount(newNights);
+    setCheckOutDate(getFutureDateStr(newNights, checkInDate));
+  };
+
+  // Quick preset helper
+  const handleFillPreset = (name: string, doc: string, phone: string, guests: number, nights: number) => {
+    setGuestName(name);
+    setGuestDocument(doc);
+    setGuestPhone(phone);
+    setGuestsCount(guests);
+    setNightsCount(nights);
+    const today = getTodayStr();
+    setCheckInDate(today);
+    setCheckOutDate(getFutureDateStr(nights, today));
+    setFormError(null);
+  };
 
   // Generate QR for accepted voucher
   useEffect(() => {
@@ -113,17 +189,29 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!guestName.trim() || !guestDocument.trim() || !guestPhone.trim()) {
-      alert('Por favor, preencha seu nome, documento e telefone.');
+    setFormError(null);
+
+    const cleanName = guestName.trim();
+    const cleanDoc = guestDocument.trim();
+    const cleanPhone = guestPhone.trim();
+
+    if (!cleanName || !cleanDoc || !cleanPhone) {
+      setFormError('Por favor, preencha todos os campos obrigatórios: Nome Completo, CPF/Passaporte e WhatsApp/Telefone.');
       return;
     }
 
+    if (eligibleUnits.length === 0 && onEnsureActiveUnits) {
+      onEnsureActiveUnits();
+    }
+
     onSubmitRequest({
-      guestName,
-      guestDocument,
-      guestPhone,
+      guestName: cleanName,
+      guestDocument: cleanDoc,
+      guestPhone: cleanPhone,
       guestsCount,
       nightsCount,
+      checkInDate,
+      checkOutDate,
       typologyPreferred: '1 Quarto',
       petFriendly,
     });
@@ -202,8 +290,11 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
                 <div>
                   <span className="text-slate-500 text-xs block">Ocupantes & Estadia</span>
                   <strong className="text-slate-200">
-                    {activeRequest.guestsCount} pessoa(s) • {activeRequest.nightsCount} noite(s)
+                    {activeRequest.guestsCount} pessoa(s) • {activeRequest.nightsCount} {activeRequest.nightsCount === 1 ? 'diária' : 'diárias'}
                   </strong>
+                  <span className="text-[11px] text-amber-400 block mt-0.5 font-medium">
+                    📅 Entrada: {formatDatePtBr(activeRequest.checkInDate)} • Saída: {formatDatePtBr(activeRequest.checkOutDate)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-500 text-xs block">Valor Total Balcão</span>
@@ -341,7 +432,8 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               <div className="text-base font-bold text-white mt-1">
                 1 Quarto
               </div>
-              <span className="text-[10px] text-slate-500">{activeRequest.guestsCount} pessoa(s) • {activeRequest.nightsCount} noite(s)</span>
+              <span className="text-[10px] text-slate-400 block">{activeRequest.guestsCount} pessoa(s) • {activeRequest.nightsCount} {activeRequest.nightsCount === 1 ? 'diária' : 'diárias'}</span>
+              <span className="text-[10px] text-amber-400 font-medium block mt-0.5">📅 {formatDatePtBr(activeRequest.checkInDate)} até {formatDatePtBr(activeRequest.checkOutDate)}</span>
             </div>
           </div>
 
@@ -480,12 +572,25 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
               </div>
             ))}
           </div>
-          <button
-            onClick={() => onCancelRequest(activeRequest.id)}
-            className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
-          >
-            Tentar Novamente
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {onEnsureActiveUnits && (
+              <button
+                onClick={() => {
+                  onEnsureActiveUnits();
+                  onCancelRequest(activeRequest.id);
+                }}
+                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+              >
+                Ativar Unidades & Tentar Novamente
+              </button>
+            )}
+            <button
+              onClick={() => onCancelRequest(activeRequest.id)}
+              className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+            >
+              Novo Atendimento
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -507,12 +612,82 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
           Sistema 100% autônomo e auditado do <strong>Crystal Place Residence</strong> (App <strong>PROXIMO</strong>). Todas as unidades possuem <strong>1 Quarto</strong> completo em Torre Única. 
           Sua solicitação é encaminhada automaticamente com notificação imediata no aparelho do próximo anfitrião.
         </p>
+
+        {/* Queue Availability Status Bar */}
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {eligibleUnits.length > 0 ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{eligibleUnits.length} anfitriões com disponibilidade imediata na fila</span>
+            </span>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 text-amber-300 text-xs font-bold border border-amber-500/30">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              <span>Fila sem unidades ativas hoje</span>
+              {onEnsureActiveUnits && (
+                <button
+                  type="button"
+                  onClick={onEnsureActiveUnits}
+                  className="ml-2 px-2.5 py-0.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-[11px] font-black transition-all"
+                >
+                  Ativar Unidades
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Main Form */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+          
+          {/* Quick Demo Pre-fill Bar */}
+          <div className="mb-6 p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800/80">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Preenchimento Rápido para Teste:
+              </span>
+              <span className="text-[10px] text-slate-500">1-clique para preencher</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleFillPreset('Dr. Thiago Medeiros', '381.992.108-44', '(62) 98144-2200', 2, 2)}
+                className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left text-xs text-slate-300 transition-all group"
+              >
+                <div className="font-bold text-white group-hover:text-amber-300 truncate">Dr. Thiago Medeiros</div>
+                <div className="text-[10px] text-slate-500">2 pessoas • 2 diárias</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFillPreset('Carla Beatriz Alencar', '822.401.559-01', '(62) 99877-3311', 3, 3)}
+                className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left text-xs text-slate-300 transition-all group"
+              >
+                <div className="font-bold text-white group-hover:text-amber-300 truncate">Carla Beatriz</div>
+                <div className="text-[10px] text-slate-500">3 pessoas • 3 diárias</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFillPreset('Eng. Marcelo Queiroz', '119.482.003-88', '(62) 98711-6644', 1, 1)}
+                className="px-2.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left text-xs text-slate-300 transition-all group"
+              >
+                <div className="font-bold text-white group-hover:text-amber-300 truncate">Eng. Marcelo Queiroz</div>
+                <div className="text-[10px] text-slate-500">1 pessoa • 1 diária</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Inline Validation Error Banner */}
+          {formError && (
+            <div className="mb-5 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-start gap-2.5 text-xs text-rose-300 animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+              <div className="leading-relaxed font-medium">{formError}</div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             
             {/* Step 1: Guest Personal Info */}
@@ -568,11 +743,64 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
 
             {/* Step 2: Stay Parameters */}
             <div className="space-y-4 pt-4 border-t border-slate-800">
-              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-amber-400" />
-                2. Parâmetros da Hospedagem (Todos 1 Quarto)
+              <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-amber-400" />
+                  <span>2. Datas e Parâmetros da Hospedagem (1 Quarto)</span>
+                </span>
+                <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                  {nightsCount} {nightsCount === 1 ? 'diária' : 'diárias'}
+                </span>
               </h3>
 
+              {/* Check-in and Check-out Date Pickers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80">
+                <div>
+                  <label className="block text-xs font-bold text-white mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-amber-300">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Data de Entrada (Check-in) *</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-normal">A partir das 14h</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={checkInDate}
+                    min={getTodayStr()}
+                    onChange={(e) => handleCheckInChange(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none transition-colors [color-scheme:dark]"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                    <span>Início da estadia</span>
+                    <span className="font-semibold text-amber-400">{formatDatePtBr(checkInDate)}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-white mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-amber-300">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Data de Saída (Check-out) *</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-normal">Até as 12h</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={checkOutDate}
+                    min={getFutureDateStr(1, checkInDate)}
+                    onChange={(e) => handleCheckOutChange(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none transition-colors [color-scheme:dark]"
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                    <span>Término da estadia</span>
+                    <span className="font-semibold text-amber-400">{formatDatePtBr(checkOutDate)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* People and Nights Selectors */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">
@@ -590,16 +818,17 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">
-                    Número de Noites
+                  <label className="block text-xs font-medium text-slate-400 mb-1 flex items-center justify-between">
+                    <span>Número de Noites</span>
+                    <span className="text-[10px] text-slate-500">Calculado por datas</span>
                   </label>
                   <select
                     value={nightsCount}
-                    onChange={(e) => setNightsCount(Number(e.target.value))}
+                    onChange={(e) => handleNightsChange(Number(e.target.value))}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
                   >
                     {[1, 2, 3, 4, 5, 7, 10, 15, 30].map(n => (
-                      <option key={n} value={n}>{n} {n === 1 ? 'diária (hoje)' : 'diárias'}</option>
+                      <option key={n} value={n}>{n} {n === 1 ? 'diária' : 'diárias'}</option>
                     ))}
                   </select>
                 </div>

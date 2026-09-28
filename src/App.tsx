@@ -99,7 +99,7 @@ export default function App() {
   const [isManualModalOpen, setIsManualModalOpen] = useState<boolean>(false);
 
   // Active in-progress request for the Totem and Host alert
-  const activeRequest = requests.find(r => r.status === 'waiting_host' || r.status === 'accepted') || null;
+  const activeRequest = requests.find(r => r.status === 'waiting_host' || r.status === 'accepted' || r.status === 'rejected') || null;
 
   // Sync access accounts to storage
   useEffect(() => {
@@ -291,10 +291,16 @@ export default function App() {
     guestPhone: string;
     guestsCount: number;
     nightsCount: number;
+    checkInDate?: string;
+    checkOutDate?: string;
     typologyPreferred: UnitTypology | 'Qualquer';
     petFriendly: boolean;
   }) => {
     const voucherCode = 'BAL-' + Math.floor(1000 + Math.random() * 9000);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const checkInDate = formData.checkInDate || todayStr;
+    const checkOutDate = formData.checkOutDate || new Date(new Date(checkInDate + 'T00:00:00').getTime() + (formData.nightsCount || 1) * 86400000).toISOString().split('T')[0];
+
     const initialRequest: GuestRequest = {
       id: 'req-' + Date.now(),
       voucherCode,
@@ -303,8 +309,8 @@ export default function App() {
       guestPhone: formData.guestPhone,
       guestsCount: formData.guestsCount,
       nightsCount: formData.nightsCount,
-      checkInDate: new Date().toISOString().split('T')[0],
-      checkOutDate: new Date(Date.now() + formData.nightsCount * 86400000).toISOString().split('T')[0],
+      checkInDate,
+      checkOutDate,
       typologyPreferred: formData.typologyPreferred,
       petFriendly: formData.petFriendly,
       status: 'waiting_host',
@@ -689,6 +695,24 @@ export default function App() {
     setRequests(prev => prev.filter(r => r.id !== requestId));
   }, []);
 
+  // 9b. ENSURE ACTIVE UNITS IN QUEUE (Wellington 1609 & 1701 + pool)
+  const handleEnsureActiveUnits = useCallback(() => {
+    setUnits(prev => {
+      const updated = prev.map(u => {
+        if (u.unitNumber === '1609') {
+          return { ...u, isEligibleByAdmin: true, isAvailableByHost: true, queuePosition: 1 };
+        }
+        if (u.unitNumber === '1701') {
+          return { ...u, isEligibleByAdmin: true, isAvailableByHost: true, queuePosition: 2 };
+        }
+        return u;
+      });
+      const reindexed = reindexQueue(updated);
+      saveUnits(reindexed);
+      return reindexed;
+    });
+  }, []);
+
   // 10. SYSTEM RESET TO INITIAL PRISTINE DATA
   const handleResetSystemData = useCallback(() => {
     if (confirm('Tem certeza que deseja excluir todos os dados e redefinir o sistema para o estado limpo? Todas as informações de testes e registros serão apagadas.')) {
@@ -796,6 +820,7 @@ export default function App() {
                 handleHostReject(reqId, req.assignedUnitId, 'Recusa rápida de demonstração');
               }
             }}
+            onEnsureActiveUnits={handleEnsureActiveUnits}
             config={config}
           />
         )}
