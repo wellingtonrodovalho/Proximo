@@ -16,6 +16,7 @@ import {
   FileText,
   Edit3
 } from 'lucide-react';
+import { ProximoLogo } from './ProximoLogo';
 
 interface HeaderProps {
   activeTab: 'guest' | 'host' | 'reception' | 'admin';
@@ -61,31 +62,30 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
           
-          {/* Logo & Complex Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-xs sm:text-sm tracking-wider flex-shrink-0">
-              PRÓX
-            </div>
-            <div className="min-w-0">
+          {/* Official Logo & Complex Info */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <ProximoLogo variant="full" size="md" theme="dark" />
+            <div className="h-8 w-px bg-slate-800 hidden sm:block" />
+            <div className="min-w-0 hidden xs:block">
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black text-white tracking-tight truncate flex items-center gap-1.5">
-                  <span className="text-amber-400">PROXIMO</span>
-                </h1>
+                <span className="text-xs font-bold text-slate-300 truncate">
+                  Crystal Place
+                </span>
                 
                 {isGuestMode ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
                     <ShieldCheck className="w-3 h-3 mr-1" />
-                    Totem de Balcão 24h
+                    Totem Balcão
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20 whitespace-nowrap">
                     <Lock className="w-3 h-3 mr-1" />
-                    Acesso Autenticado
+                    Autenticado
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 truncate">
-                Crystal Place Residence
+              <p className="text-[10px] text-slate-500 truncate">
+                Condomínio Inteligente
               </p>
             </div>
           </div>

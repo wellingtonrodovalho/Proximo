@@ -29,6 +29,7 @@ import {
 import confetti from 'canvas-confetti';
 import { Unit, GuestRequest, SystemConfig, UnitTypology } from '../types';
 import { generateQrDataUrl } from '../utils/qr';
+import { ProximoLogo } from './ProximoLogo';
 
 interface GuestTotemProps {
   units: Unit[];
@@ -644,9 +645,12 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Hero Card */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-semibold border border-amber-500/20 mb-3">
-          <Sparkles className="w-3.5 h-3.5" />
-          Totem Virtual de Balcão • Acesso Direto
+        <div className="flex justify-center mb-4">
+          <ProximoLogo variant="full" size="lg" theme="dark" />
+        </div>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold border border-teal-500/20 mb-3">
+          <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+          Totem Virtual de Balcão 24h • Crystal Place Residence
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
           Aluguel Imediato de Balcão

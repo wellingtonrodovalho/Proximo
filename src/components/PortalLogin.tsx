@@ -16,6 +16,7 @@ import {
   Sparkles,
   Check
 } from 'lucide-react';
+import { ProximoLogo } from './ProximoLogo';
 import { AccessAccount, AccessRole, AuthSession, saveSession } from '../utils/auth';
 import { Unit } from '../types';
 
@@ -188,11 +189,11 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
         </button>
 
         {/* Header */}
-        <div className="text-center space-y-1.5">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-1">
-            <Lock className="w-6 h-6" />
+        <div className="text-center space-y-2">
+          <div className="flex justify-center mb-1">
+            <ProximoLogo variant="full" size="lg" theme="dark" />
           </div>
-          <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+          <div className="text-[11px] font-bold text-teal-400 uppercase tracking-wider">
             Área Restrita • Crystal Place Residence
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white">
