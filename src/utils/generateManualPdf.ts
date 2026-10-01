@@ -21,13 +21,13 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
   // Helper for adding footer with page numbers
   const addHeaderAndFooter = (currentPage: number, totalPages: number) => {
     // Header line
-    doc.setFillColor(15, 23, 42); // slate-900
+    doc.setFillColor(5, 14, 31); // GiroGo Dark Navy
     doc.rect(0, 0, pageWidth, 12, 'F');
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(245, 158, 11); // amber-500
-    doc.text('PROXIMO • SISTEMA AUTÔNOMO DE GESTÃO E ROTATIVO DE BALCÃO', margin, 8);
+    doc.setTextColor(0, 191, 165); // GiroGo Turquoise
+    doc.text('GIROGO • RODÍZIO E FILA VIRTUAL DE ANFITRIÕES', margin, 8);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(148, 163, 184);
@@ -59,17 +59,18 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
   cursorY = 24;
 
   // Header Banner
-  doc.setFillColor(245, 158, 11); // Amber
+  doc.setFillColor(0, 191, 165); // GiroGo Turquoise
   doc.roundedRect(margin, cursorY, contentWidth, 32, 3, 3, 'F');
 
   doc.setFont('helvetica', 'black');
   doc.setFontSize(20);
-  doc.setTextColor(15, 23, 42); // Dark slate
+  doc.setTextColor(255, 255, 255); // White on Turquoise
   doc.text('MANUAL DE OPERAÇÃO E INSTRUÇÕES', margin + 6, cursorY + 12);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('SISTEMA PROXIMO • ROTATIVO DE BALCÃO AUDITÁVEL', margin + 6, cursorY + 20);
+  doc.setTextColor(5, 14, 31); // Dark Navy
+  doc.text('SISTEMA GIROGO • RODÍZIO E FILA VIRTUAL DE ANFITRIÕES (SLA 5 MIN)', margin + 6, cursorY + 20);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -209,7 +210,7 @@ export function generateManualPdf(options: ManualPdfOptions = {}): jsPDF {
       content:
         '1. O hóspede que chega ao balcão sem reserva prévia aponta o celular para a Placa QR Code oficial da portaria ou utiliza o Totem Interativo do balcão.\n' +
         '2. O hóspede informa: Nome completo, CPF/Documento, Telefone, quantidade de noites e acompanhantes.\n' +
-        '3. O sistema PROXIMO localiza a unidade número 1 da fila e dispara o chamado para o anfitrião correspondente.\n' +
+        '3. O sistema GiroGo localiza a unidade número 1 da fila e dispara o chamado para o anfitrião correspondente.\n' +
         '4. O painel da portaria exibe em tempo real o status: "Aguardando aceite do anfitrião (tempo restante: mm:ss)".'
     },
     {

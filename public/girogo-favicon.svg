@@ -1,0 +1,78 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Outer Ring Gradient: Teal to Electric Blue -->
+    <linearGradient id="girogoRingGrad" x1="20%" y1="10%" x2="80%" y2="90%">
+      <stop offset="0%" stopColor="#00E5C8" />
+      <stop offset="25%" stopColor="#00BFA5" />
+      <stop offset="55%" stopColor="#0080FF" />
+      <stop offset="85%" stopColor="#0052CC" />
+      <stop offset="100%" stopColor="#0A3680" />
+    </linearGradient>
+
+    <!-- Inner Dial Gradient -->
+    <linearGradient id="girogoDialGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stopColor="#0077E6" />
+      <stop offset="60%" stopColor="#00B4A0" />
+      <stop offset="100%" stopColor="#00E5C8" />
+    </linearGradient>
+
+    <!-- Bevel shadow / glow -->
+    <linearGradient id="girogoArrowHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#33FFDC" />
+      <stop offset="100%" stopColor="#00BFA5" />
+    </linearGradient>
+
+    <filter id="girogoGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00A896" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Outer Rotating Arrow Ring -->
+  <!-- Path of the circular body -->
+  <path
+    d="M 124 28 
+       C 64 30, 24 78, 24 136 
+       C 24 196, 72 244, 134 244 
+       C 192 244, 238 200, 240 144 
+       C 240.8 136, 234 130, 226 130 
+       C 218 130, 212 136, 211 143 
+       C 208 184, 174 216, 133 216 
+       C 87 216, 51 179, 51 134 
+       C 51 90, 81 54, 126 52 
+       L 122 72 
+       L 174 48 
+       L 132 14 
+       L 124 28 
+       Z"
+    fill="url(#girogoRingGrad)"
+    filter="url(#girogoGlow)"
+  />
+
+  <!-- Arrow Head Top Facet -->
+  <path
+    d="M 122 72 
+       L 174 48 
+       L 132 14 
+       L 124 28 
+       Z"
+    fill="url(#girogoArrowHighlight)"
+  />
+
+  <!-- Central Speedometer Dial / Pointer -->
+  <!-- Center at (132, 138), Radius ~34, Pointer extending to (172, 98) -->
+  <path
+    d="M 132 104 
+       C 113 104, 98 119, 98 138 
+       C 98 157, 113 172, 132 172 
+       C 151 172, 166 157, 166 138 
+       C 166 133, 165 128, 163 124 
+       L 182 100 
+       L 156 119 
+       C 149 110, 141 104, 132 104 
+       Z"
+    fill="url(#girogoDialGrad)"
+  />
+
+  <!-- Center Hole in the dial -->
+  <circle cx="132" cy="138" r="14" fill="#060E1A" />
+</svg>

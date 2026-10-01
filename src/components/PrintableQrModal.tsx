@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, Printer, X, ShieldCheck, Sparkles, Building2, Lock } from 'lucide-react';
 import { generateQrDataUrl } from '../utils/qr';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface PrintableQrModalProps {
   isOpen: boolean;
@@ -45,10 +46,14 @@ export const PrintableQrModal: React.FC<PrintableQrModalProps> = ({
         {/* The Printable Card itself */}
         <div 
           id="printable-plaque" 
-          className="bg-white text-slate-950 p-8 rounded-3xl text-center shadow-xl border-4 border-amber-500 space-y-4"
+          className="bg-white text-slate-950 p-8 rounded-3xl text-center shadow-xl border-4 border-[#00BFA5] space-y-4"
         >
-          <div className="flex items-center justify-center gap-2 text-amber-600 font-black text-sm uppercase tracking-wider">
-            <Building2 className="w-4 h-4" />
+          <div className="flex justify-center mb-2">
+            <GiroGoLogo variant="stacked" size="md" theme="light" />
+          </div>
+
+          <div className="flex items-center justify-center gap-2 text-teal-700 font-black text-xs uppercase tracking-wider">
+            <Building2 className="w-4 h-4 text-[#0080FF]" />
             <span>{complexName}</span>
           </div>
 
@@ -57,7 +62,7 @@ export const PrintableQrModal: React.FC<PrintableQrModalProps> = ({
           </h2>
 
           <p className="text-xs text-slate-600 max-w-xs mx-auto">
-            Aponte a câmera do seu celular para o QR Code abaixo para solicitar sua acomodação em segundos.
+            Aponte a câmera do seu celular para o QR Code abaixo para solicitar sua acomodação em segundos pelo aplicativo <strong>GiroGo</strong>.
           </p>
 
           <div className="py-2 flex justify-center">
@@ -76,14 +81,14 @@ export const PrintableQrModal: React.FC<PrintableQrModalProps> = ({
 
           <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 text-left text-[11px] text-slate-700 space-y-1">
             <div className="font-bold flex items-center gap-1.5 text-slate-900">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              SISTEMA DE EQUIDADE CONDOPROTECT
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+              SISTEMA GIROGO • EQUIDADE CONDOPROTECT
             </div>
             <p>
-              • Atendimento 100% autônomo via <strong>Fila Rotativa Imparcial e Auditada</strong>.
+              • Atendimento 100% autônomo via <strong>Rodízio e Fila Virtual de Anfitriões</strong> (SLA de 5 min).
             </p>
             <p>
-              • A portaria não possui interface para escolha manual de apartamentos.
+              • A portaria não possui interface para escolha discricionária de apartamentos.
             </p>
           </div>
         </div>
@@ -92,7 +97,7 @@ export const PrintableQrModal: React.FC<PrintableQrModalProps> = ({
         <div className="flex gap-3">
           <button
             onClick={() => window.print()}
-            className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+            className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-500/20"
           >
             <Printer className="w-4 h-4" />
             <span>Imprimir Placa para o Balcão</span>

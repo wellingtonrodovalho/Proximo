@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { Unit, GuestRequest, SystemConfig, BedConfig, UnitBlock } from '../types';
 import { playChime } from '../utils/audio';
+import { GiroGoLogo } from './GiroGoLogo';
 import { 
   requestDeviceNotificationPermission, 
   getDeviceNotificationPermission, 
@@ -118,7 +119,7 @@ export const HostPortal: React.FC<HostPortalProps> = ({
     currentUnit?.bedTypes || [{ type: 'Cama Casal Queen', quantity: 1 }]
   );
 
-  // Sync state when selected unit changes
+  // Sync state when selected unit changes or when unit properties update
   useEffect(() => {
     if (currentUnit) {
       setOwnerName(currentUnit.ownerName || '');
@@ -134,9 +135,20 @@ export const HostPortal: React.FC<HostPortalProps> = ({
         : [{ type: 'Cama Casal Queen', quantity: 1 }]);
       setPriceError('');
       setWhatsappError('');
-      setSaveSuccessMsg('');
     }
-  }, [currentUnit?.id]);
+  }, [
+    currentUnit?.id,
+    currentUnit?.whatsapp,
+    currentUnit?.ownerPhone,
+    currentUnit?.ownerName,
+    currentUnit?.ownerEmail,
+    currentUnit?.basePrice,
+    currentUnit?.cleaningFee,
+    currentUnit?.capacity,
+    currentUnit?.unitNumber,
+    currentUnit?.floor,
+    currentUnit?.bedSummary,
+  ]);
 
   // Modal State for Registering a New Unit
   const [isNewUnitModalOpen, setIsNewUnitModalOpen] = useState(false);
@@ -433,18 +445,18 @@ export const HostPortal: React.FC<HostPortalProps> = ({
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       
       {/* Top Bar: Unit Switcher, Responsible Person, WhatsApp & Quick Stats */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="bg-[#050e1f] border border-[#0c2244] rounded-3xl p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-6 girogo-glow">
         <div className="flex items-start sm:items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xl flex-shrink-0 border border-amber-500/30">
+          <div className="w-14 h-14 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-xl flex-shrink-0 border border-teal-500/30">
             <KeyRound className="w-7 h-7" />
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Portal do Proprietário</span>
-              <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-slate-800 text-amber-300 border border-slate-700">
+              <GiroGoLogo variant="badge" size="sm" theme="dark" />
+              <span className="px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#0f2a4a] text-cyan-300 border border-teal-500/30">
                 🏢 Crystal Place • {currentUnit?.floor}º Andar
               </span>
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-teal-500/10 text-teal-300 border border-teal-500/20">
                 1 Quarto Padrão
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
@@ -1607,7 +1619,7 @@ export const HostPortal: React.FC<HostPortalProps> = ({
           <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-400">
             <strong className="text-slate-200 block mb-1">Princípio da Rotatividade:</strong>
             Sempre que uma locação é aceita por você, o sistema registra a operação e posiciona seu apartamento no final da fila. 
-            Isso garante oportunidade igual para todos os anfitriões e co-anfitriões credenciados que participam do pool de balcão do Crystal Place Residence (App PROXIMO).
+            Isso garante oportunidade igual para todos os anfitriões e co-anfitriões credenciados que participam do pool de balcão do Crystal Place Residence (App GiroGo).
           </div>
         </div>
       )}
@@ -1627,7 +1639,7 @@ export const HostPortal: React.FC<HostPortalProps> = ({
                     Cadastrar Nova Unidade & Responsável
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Cadastre seu apartamento no Crystal Place Residence (Torre Única) para participar do rodízio PROXIMO.
+                    Cadastre seu apartamento no Crystal Place Residence (Torre Única) para participar do rodízio GiroGo.
                   </p>
                 </div>
               </div>

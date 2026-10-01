@@ -16,9 +16,10 @@ import {
   Sparkles,
   Check
 } from 'lucide-react';
-import { ProximoLogo } from './ProximoLogo';
+import { GiroGoLogo } from './GiroGoLogo';
 import { AccessAccount, AccessRole, AuthSession, saveSession } from '../utils/auth';
 import { Unit } from '../types';
+import { cleanPhoneDigits } from '../utils/whatsapp';
 
 interface PortalLoginProps {
   isOpen: boolean;
@@ -125,18 +126,32 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
     setSuccessMsg(null);
 
     const term = searchCredential.trim().toLowerCase();
-    const cleanDigits = term.replace(/\D/g, '');
+    const inputDigits = cleanPhoneDigits(term);
 
     if (!term) {
       setErrorMsg('Informe seu e-mail ou telefone cadastrado.');
       return;
     }
 
-    const account = accounts.find(a => 
-      a.email.toLowerCase() === term || 
-      (cleanDigits && a.phone.replace(/\D/g, '') === cleanDigits) ||
-      a.name.toLowerCase().includes(term)
-    );
+    const account = accounts.find(a => {
+      const emailMatch = a.email.toLowerCase() === term;
+      const accountDigits = cleanPhoneDigits(a.phone);
+      const phoneMatch = inputDigits && accountDigits && (
+        accountDigits === inputDigits ||
+        accountDigits.endsWith(inputDigits) ||
+        inputDigits.endsWith(accountDigits)
+      );
+      // Also match by unit's current whatsapp if this account is associated with the unit
+      const unitMatch = a.unitNumber && units.some(u => {
+        if (u.unitNumber === a.unitNumber || (a.managedUnits && a.managedUnits.includes(u.unitNumber))) {
+          const uDigits = cleanPhoneDigits(u.whatsapp || u.ownerPhone);
+          return inputDigits && uDigits && (uDigits === inputDigits || uDigits.endsWith(inputDigits) || inputDigits.endsWith(uDigits));
+        }
+        return false;
+      });
+      const nameMatch = a.name.toLowerCase().includes(term);
+      return emailMatch || phoneMatch || unitMatch || nameMatch;
+    });
 
     if (!account) {
       setErrorMsg('Nenhum cadastro encontrado com esses dados. Por favor, solicite seu acesso na aba "Solicitar Acesso".');
@@ -155,9 +170,15 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
 
     // Find unit if host or admin with unit
     let unitId: string | undefined;
+    let effectivePhone = account.phone;
     if (account.unitNumber) {
       const match = units.find(u => u.unitNumber === account.unitNumber);
-      unitId = match?.id;
+      if (match) {
+        unitId = match.id;
+        if (match.whatsapp) {
+          effectivePhone = match.whatsapp;
+        }
+      }
     }
 
     const session: AuthSession = {
@@ -167,7 +188,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
       unitNumber: account.unitNumber,
       userName: account.name,
       userEmail: account.email,
-      userPhone: account.phone,
+      userPhone: effectivePhone,
       authenticatedAt: new Date().toISOString(),
     };
 
@@ -191,7 +212,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-1">
-            <ProximoLogo variant="full" size="lg" theme="dark" />
+            <GiroGoLogo variant="full" size="lg" theme="dark" />
           </div>
           <div className="text-[11px] font-bold text-teal-400 uppercase tracking-wider">
             Área Restrita • Crystal Place Residence
@@ -200,7 +221,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
             Acesso Restrito da Equipe
           </h2>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Cadastre seus dados para validação da administração ou entre com cadastro aprovado.
+            Cadastre seus dados para validação da administração ou entre com cadastro aprovado no sistema GiroGo.
           </p>
         </div>
 
@@ -211,7 +232,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
             onClick={() => { setMode('request'); setErrorMsg(null); setSuccessMsg(null); }}
             className={`py-2 px-3 rounded-xl font-bold transition-all text-center flex items-center justify-center gap-2 ${
               mode === 'request'
-                ? 'bg-amber-500 text-slate-950 shadow-md'
+                ? 'bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-md shadow-cyan-500/20'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -223,7 +244,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
             onClick={() => { setMode('login'); setErrorMsg(null); setSuccessMsg(null); }}
             className={`py-2 px-3 rounded-xl font-bold transition-all text-center flex items-center justify-center gap-2 ${
               mode === 'login'
-                ? 'bg-amber-500 text-slate-950 shadow-md'
+                ? 'bg-gradient-to-r from-teal-500 to-blue-600 text-white shadow-md shadow-cyan-500/20'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -463,7 +484,7 @@ export const PortalLogin: React.FC<PortalLoginProps> = ({
 
               <button
                 type="submit"
-                className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-extrabold rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 active:scale-[0.99]"
               >
                 <UserCheck className="w-4 h-4" />
                 <span>Entrar no Sistema</span>

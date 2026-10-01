@@ -16,7 +16,7 @@ import {
   FileText,
   Edit3
 } from 'lucide-react';
-import { ProximoLogo } from './ProximoLogo';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface HeaderProps {
   activeTab: 'guest' | 'host' | 'reception' | 'admin';
@@ -58,14 +58,14 @@ export const Header: React.FC<HeaderProps> = ({
   const isGuestMode = activeTab === 'guest';
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-xl">
+    <header className="sticky top-0 z-40 bg-[#050e1f]/95 backdrop-blur-md border-b border-[#0c2244] shadow-xl shadow-cyan-950/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
           
           {/* Official Logo & Complex Info */}
           <div className="flex items-center gap-3.5 min-w-0">
-            <ProximoLogo variant="full" size="md" theme="dark" />
-            <div className="h-8 w-px bg-slate-800 hidden sm:block" />
+            <GiroGoLogo variant="full" size="md" theme="dark" />
+            <div className="h-8 w-px bg-slate-800 hidden sm:block border-r border-[#0c2244]" />
             <div className="min-w-0 hidden xs:block">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-300 truncate">
@@ -73,19 +73,19 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
                 
                 {isGuestMode ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-                    <ShieldCheck className="w-3 h-3 mr-1" />
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/30 whitespace-nowrap">
+                    <ShieldCheck className="w-3 h-3 mr-1 text-teal-400" />
                     Totem Balcão
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/10 text-teal-300 border border-teal-500/20 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20 whitespace-nowrap">
                     <Lock className="w-3 h-3 mr-1" />
                     Autenticado
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-500 truncate">
-                Condomínio Inteligente
+              <p className="text-[10px] text-slate-400 truncate">
+                Fila Virtual & Rodízio
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl border border-slate-700 transition-all"
                 title="Simular chegada de hóspede no balcão para testes"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Simulador</span>
               </button>
 
@@ -121,10 +121,10 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenManual && (
                 <button
                   onClick={onOpenManual}
-                  className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 text-xs font-bold rounded-xl border border-amber-500/30 hover:border-amber-500/50 shadow-sm transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 hover:text-white text-xs font-bold rounded-xl border border-cyan-500/30 hover:border-cyan-500/50 shadow-sm transition-all"
                   title="Manual Oficial de Instruções em PDF (Anfitrião, Recepção e Administrador)"
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <FileText className="w-3.5 h-3.5 text-cyan-400" />
                   <span className="hidden sm:inline">Manual (PDF)</span>
                   <span className="sm:hidden">Manual</span>
                 </button>
@@ -133,10 +133,10 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Discreet Staff & Host Login Button */}
               <button
                 onClick={() => onOpenLogin('host')}
-                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-amber-300 text-xs sm:text-sm font-semibold rounded-xl border border-slate-800 hover:border-amber-500/40 transition-all shadow"
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-teal-500/10 via-cyan-500/15 to-blue-500/10 hover:from-teal-500/20 hover:to-blue-500/20 text-cyan-300 hover:text-white text-xs sm:text-sm font-semibold rounded-xl border border-cyan-500/40 hover:border-cyan-400 transition-all shadow"
                 title="Acesso restrito para Anfitriões, Portaria e Administração"
               >
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <Lock className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden sm:inline">Acesso Restrito</span>
                 <span className="sm:hidden">Entrar</span>
               </button>
@@ -182,10 +182,10 @@ export const Header: React.FC<HeaderProps> = ({
               {activeTab === 'admin' && (
                 <button
                   onClick={() => setActiveTab('host')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
                   title="Acessar o Portal do Anfitrião como Administrador/Proprietário"
                 >
-                  <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                  <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
                   <span className="hidden sm:inline">Modo Anfitrião</span>
                 </button>
               )}
@@ -193,10 +193,10 @@ export const Header: React.FC<HeaderProps> = ({
               {activeTab === 'host' && (
                 <button
                   onClick={() => setActiveTab('admin')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
                   title="Retornar ao Painel do Administrador"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
                   <span className="hidden sm:inline">Painel do Síndico</span>
                 </button>
               )}
@@ -205,10 +205,10 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenEditCurrentUnit && (
                 <button
                   onClick={onOpenEditCurrentUnit}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-xl text-xs font-bold transition-all shadow-sm"
                   title="Editar Meu WhatsApp e Cadastro"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
+                  <Edit3 className="w-3.5 h-3.5 text-teal-400" />
                   <span className="hidden sm:inline">Meu WhatsApp & Cadastro</span>
                   <span className="sm:hidden">Cadastro</span>
                 </button>
@@ -217,10 +217,10 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Share Access Links Button */}
               <button
                 onClick={onOpenShareLinks}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-semibold transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-semibold transition-all"
                 title="Compartilhar links específicos com anfitriões ou portaria"
               >
-                <Share2 className="w-3.5 h-3.5" />
+                <Share2 className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden md:inline">Compartilhar Links</span>
               </button>
 
@@ -228,10 +228,10 @@ export const Header: React.FC<HeaderProps> = ({
               {onOpenManual && (
                 <button
                   onClick={onOpenManual}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white rounded-xl text-xs font-bold border border-amber-500/30 transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white rounded-xl text-xs font-bold border border-cyan-500/30 transition-all"
                   title="Manual Oficial de Instruções em PDF"
                 >
-                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                  <FileText className="w-3.5 h-3.5 text-cyan-400" />
                   <span className="hidden lg:inline">Manual (PDF)</span>
                 </button>
               )}
@@ -243,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({
                   title="Ver / Imprimir Placa QR do Balcão"
                   className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-medium border border-slate-700 transition-colors"
                 >
-                  <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                  <QrCode className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Placa Balcão</span>
                 </button>
               )}
@@ -254,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium border border-slate-700 transition-all"
                 title="Simular Hóspede"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               </button>
 
               {/* Sound Toggle */}
@@ -276,7 +276,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-medium border border-slate-700 transition-all"
                 title="Ir para a visão pública do Totem do Hóspede"
               >
-                <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                <QrCode className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden sm:inline">Ver Totem</span>
               </button>
 

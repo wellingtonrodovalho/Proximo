@@ -29,7 +29,7 @@ import {
 import confetti from 'canvas-confetti';
 import { Unit, GuestRequest, SystemConfig, UnitTypology } from '../types';
 import { generateQrDataUrl } from '../utils/qr';
-import { ProximoLogo } from './ProximoLogo';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface GuestTotemProps {
   units: Unit[];
@@ -400,17 +400,17 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         
         {/* Confirmation of Queue Entry Card */}
-        <div className="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div className="bg-[#050e1f] border-2 border-teal-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden girogo-glow">
           
           <div className="flex items-center justify-between pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <div className="w-11 h-11 rounded-2xl bg-teal-500/20 text-teal-300 flex items-center justify-center border border-teal-500/30">
                 <Ticket className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" />
-                  Solicitação Registrada com Sucesso via QR Code
+                <span className="text-xs font-semibold text-teal-400 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-cyan-400" />
+                  Solicitação Registrada no App GiroGo
                 </span>
                 <h3 className="text-lg font-bold text-white">
                   Comprovante de Entrada na Fila Virtual
@@ -420,7 +420,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
 
             <div className="text-right">
               <span className="text-[10px] text-slate-500 block uppercase font-bold">Voucher</span>
-              <span className="font-mono text-base font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+              <span className="font-mono text-base font-extrabold text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/30">
                 {activeRequest.voucherCode}
               </span>
             </div>
@@ -646,7 +646,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
       {/* Hero Card */}
       <div className="text-center mb-8">
         <div className="flex justify-center mb-4">
-          <ProximoLogo variant="full" size="lg" theme="dark" />
+          <GiroGoLogo variant="stacked" size="xl" theme="dark" />
         </div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 text-xs font-semibold border border-teal-500/20 mb-3">
           <Sparkles className="w-3.5 h-3.5 text-teal-400" />
@@ -656,8 +656,8 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
           Aluguel Imediato de Balcão
         </h1>
         <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
-          Sistema 100% autônomo e auditado do <strong>Crystal Place Residence</strong> (App <strong>PROXIMO</strong>). Todas as unidades possuem <strong>1 Quarto</strong> completo em Torre Única. 
-          Sua solicitação é encaminhada automaticamente com notificação imediata no aparelho do próximo anfitrião.
+          Sistema 100% autônomo e auditado do <strong>Crystal Place Residence</strong> (App <strong className="text-teal-400">GiroGo</strong>). Todas as unidades possuem <strong>1 Quarto</strong> completo em Torre Única. 
+          Sua solicitação é encaminhada automaticamente com notificação imediata no aparelho do próximo anfitrião (SLA 5 minutos).
         </p>
 
         {/* Queue Availability Status Bar */}
@@ -951,7 +951,7 @@ export const GuestTotem: React.FC<GuestTotemProps> = ({
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-xl shadow-amber-500/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-400 hover:from-teal-400 hover:to-cyan-300 text-slate-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-xl shadow-cyan-500/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2"
               >
                 <span>ENTRAR NA FILA E NOTIFICAR 1º ANFITRIÃO</span>
                 <ArrowRight className="w-5 h-5" />

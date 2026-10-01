@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { buildPortalUrl } from '../utils/auth';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface ShareLinksModalProps {
   isOpen: boolean;
@@ -53,29 +54,28 @@ export const ShareLinksModal: React.FC<ShareLinksModalProps> = ({
   };
 
   const getHostShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nPrezado(a) Anfitrião(a) / Co-Anfitrião(a),\n\nSegue o link oficial de acesso ao *Portal do Anfitrião* para participar do rodízio autônomo de hóspedes de balcão:\n\n🔗 ${hostUrl}\n\n🔑 *Validação de Acesso:*\nAo acessar o link, digite seu E-mail ou Telefone na aba "Já Tenho Cadastro" para validar seu credenciamento e gerenciar seu apartamento.\n\nCaso ainda não possua credenciamento, envie seus dados na aba "Solicitar Acesso".\n\nPor favor, mantenha sua disponibilidade ativa para receber os chamados da portaria em tempo real!`;
+    return `🏢 *${complexName} - Aplicativo GiroGo*\n\nPrezado(a) Anfitrião(a) / Co-Anfitrião(a),\n\nSegue o link oficial de acesso ao *Portal do Anfitrião* para participar do rodízio autônomo de hóspedes de balcão (SLA 5 minutos):\n\n🔗 ${hostUrl}\n\n🔑 *Validação de Acesso:*\nAo acessar o link, digite seu E-mail ou Telefone na aba "Já Tenho Cadastro" para validar seu credenciamento e gerenciar seu apartamento.\n\nCaso ainda não possua credenciamento, envie seus dados na aba "Solicitar Acesso".\n\nPor favor, mantenha sua disponibilidade ativa para receber os chamados da portaria em tempo real!`;
   };
 
   const getReceptionShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nLink de acesso operacional para a *Portaria & Balcão 24h*:\n\n🔗 ${receptionUrl}\n\n🔑 *Acesso:*\nSolicite ou entre com seu cadastro validado pela administração.`;
+    return `🏢 *${complexName} - Aplicativo GiroGo*\n\nLink de acesso operacional para a *Portaria & Balcão 24h*:\n\n🔗 ${receptionUrl}\n\n🔑 *Acesso:*\nSolicite ou entre com seu cadastro validado pela administração.`;
   };
 
   const getAdminShareMessage = () => {
-    return `🏢 *${complexName} - Aplicativo PROXIMO*\n\nLink restrito de gestão para o *Síndico e Administração*:\n\n🔗 ${adminUrl}\n\n🔑 *Acesso:*\nPainel de validação e controle administrativo do condomínio.`;
+    return `🏢 *${complexName} - Aplicativo GiroGo*\n\nLink restrito de gestão para o *Síndico e Administração*:\n\n🔗 ${adminUrl}\n\n🔑 *Acesso:*\nPainel de validação e controle administrativo do condomínio.`;
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#050e1f] border border-[#0c2244] rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Share2 className="w-5 h-5" />
-            </div>
+            <GiroGoLogo variant="badge" size="sm" theme="dark" />
+            <div className="h-6 w-px bg-slate-800 hidden sm:block" />
             <div>
-              <h3 className="text-lg font-bold text-white">Central de Links e Acessos Restritos</h3>
+              <h3 className="text-base sm:text-lg font-bold text-white">Central de Links e Acessos Restritos</h3>
               <p className="text-xs text-slate-400">
                 Somente o Totem do Hóspede é público. Envie os links abaixo para cada perfil com login protegido.
               </p>

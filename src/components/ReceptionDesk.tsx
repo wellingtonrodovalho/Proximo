@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { GuestRequest, Unit, SystemConfig, UnitTypology } from '../types';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface ReceptionDeskProps {
   requests: GuestRequest[];
@@ -147,24 +148,27 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       
       {/* 🛡️ BANNER DA BLINDAGEM DA RECEPÇÃO 🛡️ */}
-      <div className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border-2 border-emerald-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#031527] via-[#061833] to-[#040e1f] border-2 border-teal-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden girogo-glow">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold flex-shrink-0 border border-emerald-500/30">
+            <div className="w-14 h-14 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold flex-shrink-0 border border-teal-500/30">
               <ShieldCheck className="w-8 h-8" />
             </div>
             <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-1">
-                <Lock className="w-3 h-3" />
-                BLINDAGEM CONTRA ACUSAÇÕES DE FAVORECIMENTO
+              <div className="flex items-center gap-2 mb-1">
+                <GiroGoLogo variant="badge" size="sm" theme="dark" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  <Lock className="w-3 h-3" />
+                  BLINDAGEM CONTRA ACUSAÇÕES DE FAVORECIMENTO
+                </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white">
                 Portaria & Recepção 100% Neutra
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 max-w-3xl mt-1 leading-relaxed">
                 Este terminal foi projetado para retirar <strong>qualquer decisão discricionária</strong> dos porteiros e recepcionistas. 
-                A portaria não escolhe nem altera apartamentos. As locações de balcão são distribuídas estritamente por sistema 
-                autônomo e auditável em tempo real.
+                A portaria não escolhe nem altera apartamentos. As locações de balcão são distribuídas estritamente pelo aplicativo 
+                <strong> GiroGo</strong> com rodízio e fila virtual de anfitriões, SLA de 5 minutos e auditoria imutável em tempo real.
               </p>
             </div>
           </div>
@@ -263,7 +267,7 @@ export const ReceptionDesk: React.FC<ReceptionDeskProps> = ({
                             <a
                               href={getWhatsAppDirectUrl(
                                 req.assignedHostWhatsapp || req.assignedHostPhone || '',
-                                `Olá ${req.assignedHostName}! Aqui é da Portaria do Crystal Place Residence (App PROXIMO) informando sobre o Voucher ${req.voucherCode} do hóspede ${req.guestName}.`
+                                `Olá ${req.assignedHostName}! Aqui é da Portaria do Crystal Place Residence (App GiroGo) informando sobre o Voucher ${req.voucherCode} do hóspede ${req.guestName}.`
                               )}
                               target="_blank"
                               rel="noopener noreferrer"

@@ -89,7 +89,7 @@ export const EditUnitModal: React.FC<EditUnitModalProps> = ({
       setPriceError('');
       setSuccessMsg('');
     }
-  }, [unit]);
+  }, [unit, isOpen]);
 
   const handleBedQuantityChange = (type: BedConfig['type'], quantity: number) => {
     let updated: BedConfig[];

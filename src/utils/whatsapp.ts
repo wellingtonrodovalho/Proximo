@@ -5,7 +5,12 @@
 
 export function cleanPhoneDigits(raw: string): string {
   if (!raw) return '';
-  return raw.replace(/\D/g, '');
+  let digits = raw.replace(/\D/g, '');
+  // If user entered leading 0 (e.g. 062999991234 or 011...), strip it
+  if (digits.length >= 11 && digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  return digits;
 }
 
 /**
@@ -41,13 +46,14 @@ export function formatWhatsApp(raw: string): string {
 
 export function isValidWhatsApp(phone: string): boolean {
   if (!phone) return false;
-  const digits = cleanPhoneDigits(phone);
+  let digits = cleanPhoneDigits(phone);
+  if (digits.startsWith('55') && digits.length >= 12) {
+    digits = digits.slice(2);
+  }
   // Valid Brazilian numbers:
   // 10 digits (landline: DDD + 8 digits)
   // 11 digits (mobile: DDD + 9 digits)
-  // 12 or 13 digits with country code 55
   if (digits.length === 10 || digits.length === 11) return true;
-  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) return true;
   return false;
 }
 
@@ -75,7 +81,7 @@ export function getOfficialHostNotificationMessage(
   block: string,
   ownerName: string
 ): string {
-  return `🏢 *CRYSTAL PLACE RESIDENCE - APLICATIVO PROXIMO*\n\nOlá, *${ownerName}*!\nEsta é uma mensagem oficial de validação do canal de WhatsApp para o *Apto ${unitNumber}* (${block}).\n\nO sistema autônomo de rodízio da portaria enviará alertas imediatos por este canal sempre que houver um hóspede de balcão alocado para você!`;
+  return `🏢 *CRYSTAL PLACE RESIDENCE - APLICATIVO GIROGO*\n\nOlá, *${ownerName}*!\nEsta é uma mensagem oficial de validação do canal de WhatsApp para o *Apto ${unitNumber}* (${block}).\n\nO sistema autônomo de rodízio da portaria enviará alertas imediatos por este canal sempre que houver um hóspede de balcão alocado para você!`;
 }
 
 export function getReservationHostNotificationMessage(params: {
@@ -152,8 +158,8 @@ export function getEmailHostNotification(params: {
     `• Valor Total Previsto: R$ ${params.totalAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
     notesText +
     `\nPor favor, acesse o Portal do Anfitrião em até 5 minutos para aceitar ou recusar a reserva.\n\n` +
-    `Portal do Anfitrião: ${params.portalUrl || 'https://proximo-access.app'}\n\n` +
-    `Atenciosamente,\nPortaria 24h & Sistema PROXIMO`;
+    `Portal do Anfitrião: ${params.portalUrl || 'https://girogo.app'}\n\n` +
+    `Atenciosamente,\nPortaria 24h & Sistema GiroGo`;
 
   const mailtoUrl = `mailto:${params.hostEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   return { subject, body, mailtoUrl };

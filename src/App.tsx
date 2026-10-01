@@ -53,6 +53,7 @@ import { ShareLinksModal } from './components/ShareLinksModal';
 import { ManualModal } from './components/ManualModal';
 import { DispatchNotificationModal } from './components/DispatchNotificationModal';
 import { EditUnitModal } from './components/EditUnitModal';
+import { GiroGoLogo } from './components/GiroGoLogo';
 
 export default function App() {
   // Global State
@@ -116,6 +117,11 @@ export default function App() {
   useEffect(() => {
     saveAccessAccounts(accessAccounts);
   }, [accessAccounts]);
+
+  // Persist units to storage
+  useEffect(() => {
+    saveUnits(units);
+  }, [units]);
 
   const updateUrlForRole = useCallback((role: 'guest' | 'host' | 'reception' | 'admin') => {
     if (typeof window === 'undefined') return;
@@ -682,33 +688,42 @@ export default function App() {
 
   // 8. UPDATE UNIT SETTINGS & CONTACT
   const handleUpdateUnit = useCallback((updatedUnit: Unit) => {
+    const cleanPhone = updatedUnit.whatsapp || updatedUnit.ownerPhone || '';
+
     setUnits(prev => {
       const updated = prev.map(u => u.id === updatedUnit.id ? updatedUnit : u);
-      return reindexQueue(updated);
+      const reindexed = reindexQueue(updated);
+      saveUnits(reindexed);
+      return reindexed;
     });
 
     // Also sync the contact updates into accessAccounts and current session
-    setAccessAccounts(prev => prev.map(acc => {
-      if (
-        acc.unitNumber === updatedUnit.unitNumber ||
-        (acc.managedUnits && acc.managedUnits.includes(updatedUnit.unitNumber)) ||
-        (session && acc.id === session.accountId)
-      ) {
-        return {
-          ...acc,
-          phone: updatedUnit.whatsapp || updatedUnit.ownerPhone,
-          name: updatedUnit.ownerName || acc.name,
-          email: updatedUnit.ownerEmail || acc.email,
-        };
-      }
-      return acc;
-    }));
+    setAccessAccounts(prev => {
+      const updatedAccs = prev.map(acc => {
+        if (
+          acc.unitNumber === updatedUnit.unitNumber ||
+          (acc.managedUnits && acc.managedUnits.includes(updatedUnit.unitNumber)) ||
+          (session && acc.id === session.accountId) ||
+          (session && acc.email && session.userEmail && acc.email.toLowerCase() === session.userEmail.toLowerCase())
+        ) {
+          return {
+            ...acc,
+            phone: cleanPhone || acc.phone,
+            name: updatedUnit.ownerName || acc.name,
+            email: updatedUnit.ownerEmail || acc.email,
+          };
+        }
+        return acc;
+      });
+      saveAccessAccounts(updatedAccs);
+      return updatedAccs;
+    });
 
     if (session) {
       const updatedSession: AuthSession = {
         ...session,
         userName: updatedUnit.ownerName || session.userName,
-        userPhone: updatedUnit.whatsapp || updatedUnit.ownerPhone || session.userPhone,
+        userPhone: cleanPhone || session.userPhone,
         userEmail: updatedUnit.ownerEmail || session.userEmail,
       };
       setSession(updatedSession);
@@ -727,24 +742,25 @@ export default function App() {
 
   // Sync profile edits across accounts and units
   const handleUpdateAccountProfile = useCallback((profile: { name: string; phone: string; email: string }) => {
-    setAccessAccounts(prev => prev.map(acc => {
-      if (session && acc.id === session.accountId) {
-        return {
-          ...acc,
-          name: profile.name,
-          phone: profile.phone,
-          email: profile.email,
-        };
-      }
-      if (acc.name && acc.name.includes('Wellington')) {
-        return {
-          ...acc,
-          phone: profile.phone,
-          email: profile.email,
-        };
-      }
-      return acc;
-    }));
+    setAccessAccounts(prev => {
+      const updatedAccs = prev.map(acc => {
+        if (
+          (session && acc.id === session.accountId) ||
+          (session && acc.email && session.userEmail && acc.email.toLowerCase() === session.userEmail.toLowerCase()) ||
+          (acc.name && acc.name.includes('Wellington'))
+        ) {
+          return {
+            ...acc,
+            name: profile.name || acc.name,
+            phone: profile.phone || acc.phone,
+            email: profile.email || acc.email,
+          };
+        }
+        return acc;
+      });
+      saveAccessAccounts(updatedAccs);
+      return updatedAccs;
+    });
 
     if (session) {
       const updatedSession: AuthSession = {
@@ -758,18 +774,26 @@ export default function App() {
     }
 
     // Also update current unit and Wellington units
-    setUnits(prev => prev.map(u => {
-      if (u.id === currentHostUnitId || (u.ownerName && u.ownerName.includes('Wellington'))) {
-        return {
-          ...u,
-          ownerName: profile.name,
-          whatsapp: profile.phone,
-          ownerPhone: profile.phone,
-          ownerEmail: profile.email,
-        };
-      }
-      return u;
-    }));
+    setUnits(prev => {
+      const updatedUnits = prev.map(u => {
+        if (
+          u.id === currentHostUnitId || 
+          (u.ownerName && u.ownerName.includes('Wellington')) ||
+          (u.managerName && u.managerName.includes('Wellington'))
+        ) {
+          return {
+            ...u,
+            ownerName: profile.name || u.ownerName,
+            whatsapp: profile.phone || u.whatsapp,
+            ownerPhone: profile.phone || u.ownerPhone,
+            ownerEmail: profile.email || u.ownerEmail,
+          };
+        }
+        return u;
+      });
+      saveUnits(updatedUnits);
+      return updatedUnits;
+    });
   }, [session, currentHostUnitId]);
 
   // 8b. REGISTER NEW HOST UNIT & WHATSAPP CONTACT
@@ -1031,15 +1055,23 @@ export default function App() {
       </main>
 
       {/* Footer Info */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-4 px-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div>
-            <strong className="text-amber-400 font-bold tracking-wide">PROXIMO</strong> • <strong className="text-slate-200">Crystal Place Residence</strong> • Gestão de Balcão e Rodízio
+      <footer className="border-t border-[#0c2244] bg-[#040b18]/95 py-4 px-6 text-center text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <GiroGoLogo variant="badge" size="sm" theme="dark" />
+            <span className="text-slate-400">
+              • <strong className="text-slate-200">Crystal Place Residence</strong> • Rodízio e Fila Virtual de Anfitriões
+            </span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-emerald-400 font-medium">Portaria 100% Blindada</span>
-            <span>•</span>
-            <span>Distribuição Imparcial e Auditável</span>
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="text-teal-400 font-semibold flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+              Portaria 100% Blindada
+            </span>
+            <span className="text-slate-600">•</span>
+            <span className="text-slate-400">SLA 5 Minutos</span>
+            <span className="text-slate-600">•</span>
+            <span className="text-slate-400">Distribuição Imparcial e Auditada</span>
           </div>
         </div>
       </footer>

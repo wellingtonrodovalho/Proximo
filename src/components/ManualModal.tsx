@@ -14,6 +14,7 @@ import {
   Share2
 } from 'lucide-react';
 import { generateManualPdf } from '../utils/generateManualPdf';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface ManualModalProps {
   isOpen: boolean;
@@ -36,7 +37,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
     try {
       setIsDownloading(true);
       const doc = generateManualPdf({ condoName });
-      doc.save(`Manual_Instrucoes_PROXIMO_${condoName.replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Manual_Instrucoes_GiroGo_${condoName.replace(/\s+/g, '_')}.pdf`);
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3500);
     } catch (err) {
@@ -51,22 +52,21 @@ export const ManualModal: React.FC<ManualModalProps> = ({
       <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between gap-4">
+        <div className="p-5 sm:p-6 border-b border-slate-800 bg-[#050e1f] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
+            <GiroGoLogo variant="badge" size="sm" theme="dark" />
+            <div className="h-6 w-px bg-slate-800 hidden sm:block" />
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-black text-white">
                   Manual Oficial de Instruções e Diretrizes
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                  PDF Disponível
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-300 border border-teal-500/30">
+                  PDF Oficial
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                {condoName} • Sistema PROXIMO
+                {condoName} • Sistema GiroGo (SLA 5 Minutos)
               </p>
             </div>
           </div>
@@ -78,7 +78,7 @@ export const ManualModal: React.FC<ManualModalProps> = ({
               className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-lg transition-all ${
                 downloadSuccess
                   ? 'bg-emerald-500 text-slate-950'
-                  : 'bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 hover:scale-105 active:scale-95'
+                  : 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 hover:scale-105 active:scale-95 shadow-teal-500/20'
               }`}
             >
               {downloadSuccess ? (

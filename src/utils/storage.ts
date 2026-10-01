@@ -283,7 +283,8 @@ export function loadUnits(): Unit[] {
             roomsCount: 1 as const,
             typology: '1 Quarto' as const,
             basePrice: Math.max(200, u.basePrice || 200),
-            whatsapp: u.whatsapp || u.ownerPhone || '(62) 99999-0001',
+            whatsapp: u.whatsapp || u.ownerPhone || '',
+            ownerPhone: u.ownerPhone || u.whatsapp || '',
             bedsCount: u.bedsCount || (idx % 2 === 0 ? 2 : 1),
             bedSummary: u.bedSummary || (idx % 2 === 0 ? '1 Cama Queen + 1 Sofá-Cama' : '1 Cama Casal Queen'),
           };

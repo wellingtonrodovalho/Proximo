@@ -31,6 +31,7 @@ import {
 import { Unit, AuditLog, GuestRequest, SystemConfig, UnitBlock } from '../types';
 import { getWhatsAppDirectUrl } from '../utils/whatsapp';
 import { AccessAccount } from '../utils/auth';
+import { GiroGoLogo } from './GiroGoLogo';
 
 interface AdminPanelProps {
   units: Unit[];
@@ -147,18 +148,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       
       {/* Top Header Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-[#050e1f] border border-[#0c2244] rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 girogo-glow">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">
-            <ShieldCheck className="w-4 h-4" />
-            Painel da Administração Condominial
+          <div className="flex items-center gap-3 mb-2">
+            <GiroGoLogo variant="badge" size="sm" theme="dark" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/10 text-teal-300 border border-teal-500/20">
+              <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+              PAINEL DA ADMINISTRAÇÃO & SÍNDICO
+            </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-white">
             Gestão e Auditoria • Crystal Place Residence
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
             Monitore as unidades organizadas em 25 andares (13 unidades por andar), com gestão por Anfitrião ou Co-Anfitrião (Administrador), 
-            ative ou inative condôminos no rodízio e consulte a auditoria para integridade total.
+            controle o rodízio do sistema <strong>GiroGo</strong> e consulte a auditoria para integridade total.
           </p>
           {onOpenManual && (
             <div className="mt-3">
@@ -415,7 +419,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 <a
                                   href={getWhatsAppDirectUrl(
                                     unit.whatsapp || unit.ownerPhone,
-                                    `Olá ${unit.managerName || unit.ownerName}! Contato da administração do Crystal Place Residence (App PROXIMO) referente ao Apto ${unit.unitNumber} (${unit.floor}º Andar).`
+                                    `Olá ${unit.managerName || unit.ownerName}! Contato da administração do Crystal Place Residence (App GiroGo) referente ao Apto ${unit.unitNumber} (${unit.floor}º Andar).`
                                   )}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -702,7 +706,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       {/* TAB 5: SYSTEM RULES & SETTINGS */}
       {activeTab === 'settings' && (
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-2xl space-y-6">
-          <h3 className="text-lg font-bold text-white">Configurações Gerais do Rodízio PROXIMO • Crystal Place Residence</h3>
+          <h3 className="text-lg font-bold text-white">Configurações Gerais do Rodízio GiroGo • Crystal Place Residence</h3>
 
           <div className="space-y-4">
             <div>
@@ -810,7 +814,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               .map((acc) => {
                 const phoneDigits = acc.phone.replace(/\D/g, '');
                 const waUrl = `https://wa.me/55${phoneDigits}?text=${encodeURIComponent(
-                  `Olá ${acc.name}! Seu cadastro de acesso ao sistema PROXIMO (Crystal Place Residence) como ${
+                  `Olá ${acc.name}! Seu cadastro de acesso ao sistema GiroGo (Crystal Place Residence) como ${
                     acc.role === 'host' ? `Anfitrião da Unidade ${acc.unitNumber}` : acc.role === 'reception' ? 'Portaria e Balcão 24h' : 'Administração'
                   } foi ${acc.status === 'approved' ? 'VALIDADO E LIBERADO' : 'analisado'} pelo Administrador.`
                 )}`;
