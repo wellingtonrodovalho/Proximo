@@ -26,10 +26,12 @@ import {
   Phone,
   KeyRound,
   Send,
-  Trash2
+  Trash2,
+  ExternalLink,
+  Bell
 } from 'lucide-react';
 import { Unit, AuditLog, GuestRequest, SystemConfig, UnitBlock } from '../types';
-import { getWhatsAppDirectUrl } from '../utils/whatsapp';
+import { getWhatsAppDirectUrl, getEmailHostNotification } from '../utils/whatsapp';
 import { AccessAccount } from '../utils/auth';
 import { GiroGoLogo } from './GiroGoLogo';
 
@@ -201,6 +203,94 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 🚨 ACTIVE WALK-IN INCOMING CALL ALERT IN ADMIN PANEL 🚨 */}
+      {(() => {
+        const activeCall = requests.find(r => r.status === 'waiting_host');
+        if (!activeCall) return null;
+        const calledUnit = units.find(u => u.id === activeCall.assignedUnitId);
+        const targetPhone = calledUnit?.whatsapp || calledUnit?.ownerPhone || activeCall.assignedHostPhone || '(62) 99999-0001';
+        const targetEmail = calledUnit?.ownerEmail || 'Wellington.Rodovalho@gmail.com';
+        const targetName = calledUnit?.managerName || calledUnit?.ownerName || activeCall.assignedHostName || 'Wellington Rodovalho';
+        
+        const emailInfo = getEmailHostNotification({
+          voucherCode: activeCall.voucherCode,
+          guestName: activeCall.guestName,
+          unitNumber: activeCall.assignedUnitNumber || calledUnit?.unitNumber || '1609',
+          hostName: targetName,
+          hostEmail: targetEmail,
+          nightsCount: activeCall.nightsCount,
+          totalAmount: activeCall.totalAmount,
+          guestNotes: activeCall.guestNotes,
+        });
+
+        const waText = `Olá ${targetName}! Chamado da portaria GiroGo para o Apto ${activeCall.assignedUnitNumber}. Voucher ${activeCall.voucherCode}. Hóspede ${activeCall.guestName} (${activeCall.guestsCount}p, ${activeCall.nightsCount} noites).`;
+        const waLink = getWhatsAppDirectUrl(targetPhone, waText);
+
+        return (
+          <div className="bg-gradient-to-r from-red-950/80 via-amber-950/70 to-slate-900 border-2 border-amber-500/60 rounded-3xl p-6 shadow-2xl relative overflow-hidden animate-pulse-subtle">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold flex-shrink-0 border border-amber-500/40 animate-bounce">
+                  <Bell className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500 text-white animate-pulse">
+                      CHAMADO AO VIVO
+                    </span>
+                    <span className="text-xs font-mono font-bold text-amber-300">
+                      Voucher {activeCall.voucherCode}
+                    </span>
+                    <span className="text-[11px] text-slate-400">• SLA de 5 minutos em andamento</span>
+                  </div>
+                  <h3 className="text-xl font-black text-white">
+                    Hóspede {activeCall.guestName} no balcão aguardando aceite para o Apto {activeCall.assignedUnitNumber}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-300">
+                    <span>👤 Anfitrião da Vez: <strong className="text-white">{targetName}</strong></span>
+                    <span>•</span>
+                    <span>📞 {targetPhone}</span>
+                    <span>•</span>
+                    <span>📧 <strong className="text-cyan-300">{targetEmail}</strong></span>
+                    <span>•</span>
+                    <span>💰 R$ {activeCall.totalAmount.toFixed(2)} ({activeCall.nightsCount} noites)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 flex-shrink-0">
+                {emailInfo.gmailWebmailUrl && (
+                  <a
+                    href={emailInfo.gmailWebmailUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-all"
+                    title="Abre o Gmail com a notificação pronta para envio com 1 clique"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Abrir no Gmail (1 Clique)</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+
+                {waLink && (
+                  <a
+                    href={waLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-all"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>WhatsApp</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Navigation Tabs */}
       <div className="flex border-b border-slate-800 gap-2 sm:gap-6 overflow-x-auto pb-1">

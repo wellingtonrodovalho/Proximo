@@ -146,7 +146,7 @@ export function getEmailHostNotification(params: {
   totalAmount: number;
   guestNotes?: string;
   portalUrl?: string;
-}): { subject: string; body: string; mailtoUrl: string } {
+}): { subject: string; body: string; mailtoUrl: string; gmailWebmailUrl: string } {
   const subject = `[CHAMADO PORTARIA] Novo Hóspede para o Apto ${params.unitNumber} - Voucher ${params.voucherCode}`;
   const notesText = params.guestNotes ? `• Observações do Solicitante: "${params.guestNotes}"\n` : '';
 
@@ -162,7 +162,8 @@ export function getEmailHostNotification(params: {
     `Atenciosamente,\nPortaria 24h & Sistema GiroGo`;
 
   const mailtoUrl = `mailto:${params.hostEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  return { subject, body, mailtoUrl };
+  const gmailWebmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(params.hostEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return { subject, body, mailtoUrl, gmailWebmailUrl };
 }
 
 export function getSmsHostNotification(params: {

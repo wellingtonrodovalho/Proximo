@@ -121,6 +121,7 @@ export interface MultiChannelCallDispatchResult {
   };
   email: {
     mailtoUrl: string;
+    gmailWebmailUrl?: string;
     subject: string;
     body: string;
   };

@@ -123,6 +123,66 @@ export default function App() {
     saveUnits(units);
   }, [units]);
 
+  // Cross-tab real-time sync with BroadcastChannel and storage events
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('girogo_cross_tab_sync');
+        bc.onmessage = (event) => {
+          const msg = event.data;
+          if (msg && msg.type) {
+            // Instantly refresh state from storage
+            const freshRequests = loadRequests();
+            const freshUnits = loadUnits();
+            const freshLogs = loadAuditLogs();
+            setRequests(freshRequests);
+            setUnits(freshUnits);
+            setAuditLogs(freshLogs);
+
+            if (msg.type === 'NEW_WALK_IN_REQUEST') {
+              if (soundEnabled) {
+                playChime('incoming_call');
+              }
+              if (msg.calledUnitId) {
+                setCurrentHostUnitId(msg.calledUnitId);
+              }
+            }
+          }
+        };
+      }
+    } catch {
+      // Ignore BroadcastChannel errors in restricted contexts
+    }
+
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key && (e.key.includes('rotativo302') || e.key.includes('girogo'))) {
+        setRequests(loadRequests());
+        setUnits(loadUnits());
+        setAuditLogs(loadAuditLogs());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, [soundEnabled]);
+
+  const broadcastSync = useCallback((payload: Record<string, unknown>) => {
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('girogo_cross_tab_sync');
+        bc.postMessage(payload);
+        bc.close();
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   const updateUrlForRole = useCallback((role: 'guest' | 'host' | 'reception' | 'admin') => {
     if (typeof window === 'undefined') return;
     const url = buildPortalUrl(role);
@@ -399,8 +459,15 @@ export default function App() {
       setDispatchedCallRequest(updatedRequest);
       setDispatchedCallUnit(calledUnit);
       setIsDispatchModalOpen(true);
+
+      // Broadcast to other open tabs (e.g. Admin or Host Portal) in real time
+      broadcastSync({
+        type: 'NEW_WALK_IN_REQUEST',
+        requestId: updatedRequest.id,
+        calledUnitId: calledUnit.id,
+      });
     }
-  }, [units, auditLogs, config, triggerAudio]);
+  }, [units, auditLogs, config, triggerAudio, broadcastSync]);
 
   // 2. HOST ACCEPTS BOOKING (SEALS THE DEAL & ROTATES TO BACK OF QUEUE)
   const handleHostAccept = useCallback((requestId: string, unitId: string) => {
@@ -460,7 +527,8 @@ export default function App() {
     setAuditLogs([logRotation, logAccepted, ...auditLogs]);
 
     triggerAudio('accepted');
-  }, [requests, units, auditLogs, triggerAudio]);
+    broadcastSync({ type: 'REQUEST_ACCEPTED', requestId });
+  }, [requests, units, auditLogs, triggerAudio, broadcastSync]);
 
   // 3. HOST REJECTS (PASSES TO NEXT IN QUEUE IMMEDIATELY)
   const handleHostReject = useCallback((requestId: string, unitId: string, reason: string) => {

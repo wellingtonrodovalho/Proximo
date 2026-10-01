@@ -317,13 +317,26 @@ export const DispatchNotificationModal: React.FC<DispatchNotificationModalProps>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              {emailData.gmailWebmailUrl && (
+                <a
+                  href={emailData.gmailWebmailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 transition-all"
+                  title="Abre o Gmail no navegador com o destinatário, assunto e texto já preenchidos"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Abrir Direto no Gmail (1 Clique)</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+
               <a
                 href={emailData.mailtoUrl}
-                className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 transition-all"
+                className="py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2 transition-all"
               >
                 <Mail className="w-4 h-4" />
-                <span>Abrir no Seu Programa de E-mail</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Outlook / App Padrão</span>
               </a>
 
               <button
@@ -333,6 +346,10 @@ export const DispatchNotificationModal: React.FC<DispatchNotificationModalProps>
                 {copiedText ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-slate-400" />}
                 <span>{copiedText ? 'Copiado!' : 'Copiar Texto'}</span>
               </button>
+            </div>
+
+            <div className="p-3 bg-blue-950/40 rounded-xl border border-blue-500/20 text-[11px] text-blue-200 leading-relaxed">
+              💡 <strong>Como funciona o envio de e-mails em navegadores:</strong> Por questões de segurança dos navegadores, páginas web em ambiente de demonstração não conseguem disparar e-mails SMTP silenciosos diretamente para os servidores do Google sem uma chave de API de e-mail (SendGrid/Resend) configurada no backend. Clique em <strong>"Abrir Direto no Gmail"</strong> para abrir sua caixa de e-mail com a mensagem já digitada e pronta para envio!
             </div>
           </div>
         )}
